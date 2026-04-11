@@ -1,0 +1,49 @@
+# Xcode
+#
+# gitignore contributors: remember to update Global/Xcode.gitignore, Objective-C.gitignore & Swift.gitignore
+
+## User settings
+xcuserdata/
+
+## Xcode build artifacts
+DerivedData/
+build/
+.build/
+
+## Workspace state
+*.xcworkspace/xcuserdata/
+*.xcworkspace/xcshareddata/IDEWorkspaceChecks.plist
+
+## Swift Package Manager
+.swiftpm/xcode/package.xcworkspace/contents.xcworkspacedata
+.swiftpm/xcode/xcuserdata/
+Packages/
+
+## CocoaPods (not used, but good practice)
+Pods/
+
+## Fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots/**/*.png
+fastlane/test_output
+
+## macOS
+.DS_Store
+*.swp
+*~.nib
+
+## Playgrounds
+timeline.xctimeline
+playground.xcworkspace
+
+## Archives
+*.xcarchive
+
+## Provisioning profiles (sensitive)
+*.mobileprovision
+*.provisionprofile
+
+## Environment variables (sensitive)
+.env
+.env.*

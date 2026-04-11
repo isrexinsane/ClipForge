@@ -1,0 +1,7 @@
+/*
+   Localizable.strings
+   ClipForge
+
+   All user-facing strings are centralized here for compliance auditing.
+   No user-facing string should use the word "download" — see CLAUDE.md § App Store Compliance Rules.
+*/

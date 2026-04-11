@@ -1,0 +1,5 @@
+fastapi==0.115.12
+uvicorn==0.34.2
+yt-dlp==2026.3.17
+slowapi==0.1.9
+pydantic==2.11.3
