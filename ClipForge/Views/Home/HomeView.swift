@@ -16,8 +16,7 @@ struct HomeView: View {
     @ObservedObject var viewModel: HomeViewModel
     @Environment(\.scenePhase) private var scenePhase
 
-    // Subscription sheet + restore feedback
-    @State private var showSubscription = false
+    // Restore feedback
     @State private var restoreFeedback: String?
     @State private var showRestoreFeedback = false
 
@@ -88,21 +87,8 @@ struct HomeView: View {
                 )
             }
         }
-        .sheet(isPresented: $showSubscription) {
-            SubscriptionView()
-        }
         .overlay(alignment: .bottom) {
-            if showRestoreFeedback, let message = restoreFeedback {
-                Text(message)
-                    .font(CFFont.jetBrainsMono(size: 14))
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 20)
-                    .padding(.vertical, 12)
-                    .background(Capsule().fill(Color.cfDarkBase))
-                    .padding(.bottom, 60)
-                    .transition(.opacity.combined(with: .move(edge: .bottom)))
-                    .animation(.easeInOut(duration: 0.3), value: showRestoreFeedback)
-            }
+            restoreFeedbackToast
         }
     }
 
@@ -191,6 +177,23 @@ struct HomeView: View {
                 }
                 .padding(.top, 8)
             }
+        }
+    }
+
+    // MARK: - Restore Feedback Toast
+
+    @ViewBuilder
+    private var restoreFeedbackToast: some View {
+        if showRestoreFeedback, let message = restoreFeedback {
+            Text(message)
+                .font(CFFont.jetBrainsMono(size: 14))
+                .foregroundStyle(.white)
+                .padding(.horizontal, 20)
+                .padding(.vertical, 12)
+                .background(Capsule().fill(Color.cfDarkBase))
+                .padding(.bottom, 60)
+                .transition(.opacity.combined(with: .move(edge: .bottom)))
+                .animation(.easeInOut(duration: 0.3), value: showRestoreFeedback)
         }
     }
 

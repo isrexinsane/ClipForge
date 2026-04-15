@@ -29,7 +29,7 @@ struct TrimModalView: View {
     @StateObject private var playerManager: VideoPlayerManager
     @StateObject private var filmstripGenerator = FilmstripGenerator()
     @StateObject private var exportViewModel = ExportViewModel()
-    @ObservedObject private var gatekeeper = FreemiumGatekeeper.shared
+    @ObservedObject private var gatekeeper: FreemiumGatekeeper
     let videoURL: URL
     let onDismiss: () -> Void
 
@@ -42,9 +42,6 @@ struct TrimModalView: View {
     // Freemium gate prompt
     @State private var showFreemiumGate = false
 
-    // Subscription sheet
-    @State private var showSubscription = false
-
     /// Creates the Trim Modal for a given local video file.
     ///
     /// - Parameters:
@@ -53,6 +50,7 @@ struct TrimModalView: View {
     init(videoURL: URL, onDismiss: @escaping () -> Void) {
         self.videoURL = videoURL
         self._playerManager = StateObject(wrappedValue: VideoPlayerManager(videoURL: videoURL))
+        self._gatekeeper = ObservedObject(wrappedValue: FreemiumGatekeeper.shared)
         self.onDismiss = onDismiss
     }
 
@@ -79,6 +77,7 @@ struct TrimModalView: View {
                     .padding(.horizontal, 16)
                     .padding(.bottom, 16)
             }
+
         }
         .statusBarHidden()
         .persistentSystemOverlays(.hidden)
@@ -90,9 +89,6 @@ struct TrimModalView: View {
             if case .success(let gifData, _, _) = exportViewModel.exportState {
                 ShareSheet(activityItems: [gifData])
             }
-        }
-        .sheet(isPresented: $showSubscription) {
-            SubscriptionView()
         }
     }
 
@@ -461,7 +457,8 @@ struct TrimModalView: View {
                 .multilineTextAlignment(.center)
 
             Button {
-                showSubscription = true
+                // TODO: present subscription view (wired in a later story)
+                print("TODO: present subscription")
             } label: {
                 Text("Upgrade — $9.99/year")
                     .font(CFFont.jetBrainsMono(size: 16))

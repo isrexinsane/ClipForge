@@ -26,6 +26,61 @@
 		AA000021 /* PlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000021 /* PlayerView.swift */; };
 		AA000022 /* GIFSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000022 /* GIFSettingsView.swift */; };
 		AA000023 /* ExportSuccessView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB000023 /* ExportSuccessView.swift */; };
+		CD5C942A2F8C7FE6009A5793 /* Inter-VariableFont_opsz,wght.ttf in Resources */ = {isa = PBXBuildFile; fileRef = CD5C94292F8C7FE6009A5793 /* Inter-VariableFont_opsz,wght.ttf */; };
+		CD5C942B2F8C7FE6009A5793 /* Inter-Italic-VariableFont_opsz,wght.ttf in Resources */ = {isa = PBXBuildFile; fileRef = CD5C94282F8C7FE6009A5793 /* Inter-Italic-VariableFont_opsz,wght.ttf */; };
+		CD5C944C2F8C7FFA009A5793 /* JetBrainsMono-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = CD5C942C2F8C7FFA009A5793 /* JetBrainsMono-Bold.ttf */; };
+		CD5C944D2F8C7FFA009A5793 /* JetBrainsMonoNL-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = CD5C94452F8C7FFA009A5793 /* JetBrainsMonoNL-Medium.ttf */; };
+		CD5C944E2F8C7FFA009A5793 /* JetBrainsMonoNL-SemiBoldItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = CD5C94492F8C7FFA009A5793 /* JetBrainsMonoNL-SemiBoldItalic.ttf */; };
+		CD5C944F2F8C7FFA009A5793 /* JetBrainsMono-SemiBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = CD5C94382F8C7FFA009A5793 /* JetBrainsMono-SemiBold.ttf */; };
+		CD5C94502F8C7FFA009A5793 /* JetBrainsMono-Thin.ttf in Resources */ = {isa = PBXBuildFile; fileRef = CD5C943A2F8C7FFA009A5793 /* JetBrainsMono-Thin.ttf */; };
+		CD5C94512F8C7FFA009A5793 /* JetBrainsMonoNL-ExtraLight.ttf in Resources */ = {isa = PBXBuildFile; fileRef = CD5C94402F8C7FFA009A5793 /* JetBrainsMonoNL-ExtraLight.ttf */; };
+		CD5C94522F8C7FFA009A5793 /* JetBrainsMonoNL-ThinItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = CD5C944B2F8C7FFA009A5793 /* JetBrainsMonoNL-ThinItalic.ttf */; };
+		CD5C94532F8C7FFA009A5793 /* JetBrainsMono-Light.ttf in Resources */ = {isa = PBXBuildFile; fileRef = CD5C94332F8C7FFA009A5793 /* JetBrainsMono-Light.ttf */; };
+		CD5C94542F8C7FFA009A5793 /* JetBrainsMonoNL-BoldItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = CD5C943D2F8C7FFA009A5793 /* JetBrainsMonoNL-BoldItalic.ttf */; };
+		CD5C94552F8C7FFA009A5793 /* JetBrainsMonoNL-ExtraBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = CD5C943E2F8C7FFA009A5793 /* JetBrainsMonoNL-ExtraBold.ttf */; };
+		CD5C94562F8C7FFA009A5793 /* JetBrainsMono-BoldItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = CD5C942D2F8C7FFA009A5793 /* JetBrainsMono-BoldItalic.ttf */; };
+		CD5C94572F8C7FFA009A5793 /* JetBrainsMonoNL-SemiBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = CD5C94482F8C7FFA009A5793 /* JetBrainsMonoNL-SemiBold.ttf */; };
+		CD5C94582F8C7FFA009A5793 /* JetBrainsMono-ThinItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = CD5C943B2F8C7FFA009A5793 /* JetBrainsMono-ThinItalic.ttf */; };
+		CD5C94592F8C7FFA009A5793 /* JetBrainsMono-ExtraLight.ttf in Resources */ = {isa = PBXBuildFile; fileRef = CD5C94302F8C7FFA009A5793 /* JetBrainsMono-ExtraLight.ttf */; };
+		CD5C945A2F8C7FFA009A5793 /* JetBrainsMono-ExtraBoldItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = CD5C942F2F8C7FFA009A5793 /* JetBrainsMono-ExtraBoldItalic.ttf */; };
+		CD5C945B2F8C7FFA009A5793 /* JetBrainsMonoNL-LightItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = CD5C94442F8C7FFA009A5793 /* JetBrainsMonoNL-LightItalic.ttf */; };
+		CD5C945C2F8C7FFA009A5793 /* JetBrainsMonoNL-MediumItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = CD5C94462F8C7FFA009A5793 /* JetBrainsMonoNL-MediumItalic.ttf */; };
+		CD5C945D2F8C7FFA009A5793 /* JetBrainsMonoNL-Thin.ttf in Resources */ = {isa = PBXBuildFile; fileRef = CD5C944A2F8C7FFA009A5793 /* JetBrainsMonoNL-Thin.ttf */; };
+		CD5C945E2F8C7FFA009A5793 /* JetBrainsMonoNL-ExtraBoldItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = CD5C943F2F8C7FFA009A5793 /* JetBrainsMonoNL-ExtraBoldItalic.ttf */; };
+		CD5C945F2F8C7FFA009A5793 /* JetBrainsMonoNL-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = CD5C94472F8C7FFA009A5793 /* JetBrainsMonoNL-Regular.ttf */; };
+		CD5C94602F8C7FFA009A5793 /* JetBrainsMono-ExtraLightItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = CD5C94312F8C7FFA009A5793 /* JetBrainsMono-ExtraLightItalic.ttf */; };
+		CD5C94612F8C7FFA009A5793 /* JetBrainsMono-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = CD5C94372F8C7FFA009A5793 /* JetBrainsMono-Regular.ttf */; };
+		CD5C94622F8C7FFA009A5793 /* JetBrainsMono-ExtraBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = CD5C942E2F8C7FFA009A5793 /* JetBrainsMono-ExtraBold.ttf */; };
+		CD5C94632F8C7FFA009A5793 /* JetBrainsMono-Italic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = CD5C94322F8C7FFA009A5793 /* JetBrainsMono-Italic.ttf */; };
+		CD5C94642F8C7FFA009A5793 /* JetBrainsMono-SemiBoldItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = CD5C94392F8C7FFA009A5793 /* JetBrainsMono-SemiBoldItalic.ttf */; };
+		CD5C94652F8C7FFA009A5793 /* JetBrainsMonoNL-ExtraLightItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = CD5C94412F8C7FFA009A5793 /* JetBrainsMonoNL-ExtraLightItalic.ttf */; };
+		CD5C94662F8C7FFA009A5793 /* JetBrainsMonoNL-Italic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = CD5C94422F8C7FFA009A5793 /* JetBrainsMonoNL-Italic.ttf */; };
+		CD5C94672F8C7FFA009A5793 /* JetBrainsMonoNL-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = CD5C943C2F8C7FFA009A5793 /* JetBrainsMonoNL-Bold.ttf */; };
+		CD5C94682F8C7FFA009A5793 /* JetBrainsMono-LightItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = CD5C94342F8C7FFA009A5793 /* JetBrainsMono-LightItalic.ttf */; };
+		CD5C94692F8C7FFA009A5793 /* JetBrainsMono-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = CD5C94352F8C7FFA009A5793 /* JetBrainsMono-Medium.ttf */; };
+		CD5C946A2F8C7FFA009A5793 /* JetBrainsMono-MediumItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = CD5C94362F8C7FFA009A5793 /* JetBrainsMono-MediumItalic.ttf */; };
+		CD5C946B2F8C7FFA009A5793 /* JetBrainsMonoNL-Light.ttf in Resources */ = {isa = PBXBuildFile; fileRef = CD5C94432F8C7FFA009A5793 /* JetBrainsMonoNL-Light.ttf */; };
+		CD5C946E2F8C81A8009A5793 /* GIFHistoryEntry.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD5C946D2F8C81A8009A5793 /* GIFHistoryEntry.swift */; };
+		CD5C946F2F8C81A8009A5793 /* AppRoute.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD5C946C2F8C81A8009A5793 /* AppRoute.swift */; };
+		CD5C94782F8C81C4009A5793 /* FilmstripGenerator.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD5C94742F8C81C4009A5793 /* FilmstripGenerator.swift */; };
+		CD5C94792F8C81C4009A5793 /* GIFHistoryStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD5C94762F8C81C4009A5793 /* GIFHistoryStore.swift */; };
+		CD5C947A2F8C81C4009A5793 /* Configuration.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD5C94722F8C81C4009A5793 /* Configuration.swift */; };
+		CD5C947B2F8C81C4009A5793 /* GIFEncoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD5C94752F8C81C4009A5793 /* GIFEncoder.swift */; };
+		CD5C947C2F8C81C4009A5793 /* VideoPlayerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD5C94772F8C81C4009A5793 /* VideoPlayerManager.swift */; };
+		CD5C947D2F8C81C4009A5793 /* APIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD5C94702F8C81C4009A5793 /* APIService.swift */; };
+		CD5C947E2F8C81C4009A5793 /* ClipboardMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD5C94712F8C81C4009A5793 /* ClipboardMonitor.swift */; };
+		CD5C947F2F8C81C4009A5793 /* ExportManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD5C94732F8C81C4009A5793 /* ExportManager.swift */; };
+		CD5C94812F8C81D2009A5793 /* DesignTokens.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD5C94802F8C81D2009A5793 /* DesignTokens.swift */; };
+		CD5C94832F8C81F8009A5793 /* CTAButtonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD5C94822F8C81F8009A5793 /* CTAButtonView.swift */; };
+		CD5C94862F8C8203009A5793 /* TrimBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD5C94842F8C8203009A5793 /* TrimBarView.swift */; };
+		CD5C94872F8C8203009A5793 /* TrimModalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD5C94852F8C8203009A5793 /* TrimModalView.swift */; };
+		CD5C948B2F8C8273009A5793 /* MediaLibraryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD5C94892F8C8273009A5793 /* MediaLibraryView.swift */; };
+		CD5C948D2F8C8A49009A5793 /* ImportState.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD5C948C2F8C8A49009A5793 /* ImportState.swift */; };
+		CD5C94912F8C8AF6009A5793 /* ExportViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD5C948E2F8C8AF6009A5793 /* ExportViewModel.swift */; };
+		CD5C94922F8C8AF6009A5793 /* HomeViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD5C948F2F8C8AF6009A5793 /* HomeViewModel.swift */; };
+		CD5C94932F8C8AF6009A5793 /* TrimViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD5C94902F8C8AF6009A5793 /* TrimViewModel.swift */; };
+		CD5C94962F9032F1009A5793 /* SubscriptionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD5C94952F9032F1009A5793 /* SubscriptionManager.swift */; };
+		CD5C94972F9032F1009A5793 /* FreemiumGatekeeper.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD5C94942F9032F1009A5793 /* FreemiumGatekeeper.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -50,6 +105,61 @@
 		AB000022 /* GIFSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GIFSettingsView.swift; sourceTree = "<group>"; };
 		AB000023 /* ExportSuccessView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportSuccessView.swift; sourceTree = "<group>"; };
 		AC000001 /* ClipForge.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ClipForge.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		CD5C94282F8C7FE6009A5793 /* Inter-Italic-VariableFont_opsz,wght.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Inter-Italic-VariableFont_opsz,wght.ttf"; sourceTree = "<group>"; };
+		CD5C94292F8C7FE6009A5793 /* Inter-VariableFont_opsz,wght.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Inter-VariableFont_opsz,wght.ttf"; sourceTree = "<group>"; };
+		CD5C942C2F8C7FFA009A5793 /* JetBrainsMono-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "JetBrainsMono-Bold.ttf"; sourceTree = "<group>"; };
+		CD5C942D2F8C7FFA009A5793 /* JetBrainsMono-BoldItalic.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "JetBrainsMono-BoldItalic.ttf"; sourceTree = "<group>"; };
+		CD5C942E2F8C7FFA009A5793 /* JetBrainsMono-ExtraBold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "JetBrainsMono-ExtraBold.ttf"; sourceTree = "<group>"; };
+		CD5C942F2F8C7FFA009A5793 /* JetBrainsMono-ExtraBoldItalic.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "JetBrainsMono-ExtraBoldItalic.ttf"; sourceTree = "<group>"; };
+		CD5C94302F8C7FFA009A5793 /* JetBrainsMono-ExtraLight.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "JetBrainsMono-ExtraLight.ttf"; sourceTree = "<group>"; };
+		CD5C94312F8C7FFA009A5793 /* JetBrainsMono-ExtraLightItalic.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "JetBrainsMono-ExtraLightItalic.ttf"; sourceTree = "<group>"; };
+		CD5C94322F8C7FFA009A5793 /* JetBrainsMono-Italic.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "JetBrainsMono-Italic.ttf"; sourceTree = "<group>"; };
+		CD5C94332F8C7FFA009A5793 /* JetBrainsMono-Light.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "JetBrainsMono-Light.ttf"; sourceTree = "<group>"; };
+		CD5C94342F8C7FFA009A5793 /* JetBrainsMono-LightItalic.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "JetBrainsMono-LightItalic.ttf"; sourceTree = "<group>"; };
+		CD5C94352F8C7FFA009A5793 /* JetBrainsMono-Medium.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "JetBrainsMono-Medium.ttf"; sourceTree = "<group>"; };
+		CD5C94362F8C7FFA009A5793 /* JetBrainsMono-MediumItalic.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "JetBrainsMono-MediumItalic.ttf"; sourceTree = "<group>"; };
+		CD5C94372F8C7FFA009A5793 /* JetBrainsMono-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "JetBrainsMono-Regular.ttf"; sourceTree = "<group>"; };
+		CD5C94382F8C7FFA009A5793 /* JetBrainsMono-SemiBold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "JetBrainsMono-SemiBold.ttf"; sourceTree = "<group>"; };
+		CD5C94392F8C7FFA009A5793 /* JetBrainsMono-SemiBoldItalic.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "JetBrainsMono-SemiBoldItalic.ttf"; sourceTree = "<group>"; };
+		CD5C943A2F8C7FFA009A5793 /* JetBrainsMono-Thin.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "JetBrainsMono-Thin.ttf"; sourceTree = "<group>"; };
+		CD5C943B2F8C7FFA009A5793 /* JetBrainsMono-ThinItalic.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "JetBrainsMono-ThinItalic.ttf"; sourceTree = "<group>"; };
+		CD5C943C2F8C7FFA009A5793 /* JetBrainsMonoNL-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "JetBrainsMonoNL-Bold.ttf"; sourceTree = "<group>"; };
+		CD5C943D2F8C7FFA009A5793 /* JetBrainsMonoNL-BoldItalic.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "JetBrainsMonoNL-BoldItalic.ttf"; sourceTree = "<group>"; };
+		CD5C943E2F8C7FFA009A5793 /* JetBrainsMonoNL-ExtraBold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "JetBrainsMonoNL-ExtraBold.ttf"; sourceTree = "<group>"; };
+		CD5C943F2F8C7FFA009A5793 /* JetBrainsMonoNL-ExtraBoldItalic.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "JetBrainsMonoNL-ExtraBoldItalic.ttf"; sourceTree = "<group>"; };
+		CD5C94402F8C7FFA009A5793 /* JetBrainsMonoNL-ExtraLight.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "JetBrainsMonoNL-ExtraLight.ttf"; sourceTree = "<group>"; };
+		CD5C94412F8C7FFA009A5793 /* JetBrainsMonoNL-ExtraLightItalic.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "JetBrainsMonoNL-ExtraLightItalic.ttf"; sourceTree = "<group>"; };
+		CD5C94422F8C7FFA009A5793 /* JetBrainsMonoNL-Italic.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "JetBrainsMonoNL-Italic.ttf"; sourceTree = "<group>"; };
+		CD5C94432F8C7FFA009A5793 /* JetBrainsMonoNL-Light.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "JetBrainsMonoNL-Light.ttf"; sourceTree = "<group>"; };
+		CD5C94442F8C7FFA009A5793 /* JetBrainsMonoNL-LightItalic.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "JetBrainsMonoNL-LightItalic.ttf"; sourceTree = "<group>"; };
+		CD5C94452F8C7FFA009A5793 /* JetBrainsMonoNL-Medium.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "JetBrainsMonoNL-Medium.ttf"; sourceTree = "<group>"; };
+		CD5C94462F8C7FFA009A5793 /* JetBrainsMonoNL-MediumItalic.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "JetBrainsMonoNL-MediumItalic.ttf"; sourceTree = "<group>"; };
+		CD5C94472F8C7FFA009A5793 /* JetBrainsMonoNL-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "JetBrainsMonoNL-Regular.ttf"; sourceTree = "<group>"; };
+		CD5C94482F8C7FFA009A5793 /* JetBrainsMonoNL-SemiBold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "JetBrainsMonoNL-SemiBold.ttf"; sourceTree = "<group>"; };
+		CD5C94492F8C7FFA009A5793 /* JetBrainsMonoNL-SemiBoldItalic.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "JetBrainsMonoNL-SemiBoldItalic.ttf"; sourceTree = "<group>"; };
+		CD5C944A2F8C7FFA009A5793 /* JetBrainsMonoNL-Thin.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "JetBrainsMonoNL-Thin.ttf"; sourceTree = "<group>"; };
+		CD5C944B2F8C7FFA009A5793 /* JetBrainsMonoNL-ThinItalic.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "JetBrainsMonoNL-ThinItalic.ttf"; sourceTree = "<group>"; };
+		CD5C946C2F8C81A8009A5793 /* AppRoute.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppRoute.swift; sourceTree = "<group>"; };
+		CD5C946D2F8C81A8009A5793 /* GIFHistoryEntry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GIFHistoryEntry.swift; sourceTree = "<group>"; };
+		CD5C94702F8C81C4009A5793 /* APIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIService.swift; sourceTree = "<group>"; };
+		CD5C94712F8C81C4009A5793 /* ClipboardMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClipboardMonitor.swift; sourceTree = "<group>"; };
+		CD5C94722F8C81C4009A5793 /* Configuration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Configuration.swift; sourceTree = "<group>"; };
+		CD5C94732F8C81C4009A5793 /* ExportManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportManager.swift; sourceTree = "<group>"; };
+		CD5C94742F8C81C4009A5793 /* FilmstripGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FilmstripGenerator.swift; sourceTree = "<group>"; };
+		CD5C94752F8C81C4009A5793 /* GIFEncoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GIFEncoder.swift; sourceTree = "<group>"; };
+		CD5C94762F8C81C4009A5793 /* GIFHistoryStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GIFHistoryStore.swift; sourceTree = "<group>"; };
+		CD5C94772F8C81C4009A5793 /* VideoPlayerManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoPlayerManager.swift; sourceTree = "<group>"; };
+		CD5C94802F8C81D2009A5793 /* DesignTokens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignTokens.swift; sourceTree = "<group>"; };
+		CD5C94822F8C81F8009A5793 /* CTAButtonView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CTAButtonView.swift; sourceTree = "<group>"; };
+		CD5C94842F8C8203009A5793 /* TrimBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrimBarView.swift; sourceTree = "<group>"; };
+		CD5C94852F8C8203009A5793 /* TrimModalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrimModalView.swift; sourceTree = "<group>"; };
+		CD5C94892F8C8273009A5793 /* MediaLibraryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaLibraryView.swift; sourceTree = "<group>"; };
+		CD5C948C2F8C8A49009A5793 /* ImportState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImportState.swift; sourceTree = "<group>"; };
+		CD5C948E2F8C8AF6009A5793 /* ExportViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportViewModel.swift; sourceTree = "<group>"; };
+		CD5C948F2F8C8AF6009A5793 /* HomeViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeViewModel.swift; sourceTree = "<group>"; };
+		CD5C94902F8C8AF6009A5793 /* TrimViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrimViewModel.swift; sourceTree = "<group>"; };
+		CD5C94942F9032F1009A5793 /* FreemiumGatekeeper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FreemiumGatekeeper.swift; sourceTree = "<group>"; };
+		CD5C94952F9032F1009A5793 /* SubscriptionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubscriptionManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -90,6 +200,9 @@
 		AE000003 /* Models */ = {
 			isa = PBXGroup;
 			children = (
+				CD5C948C2F8C8A49009A5793 /* ImportState.swift */,
+				CD5C946C2F8C81A8009A5793 /* AppRoute.swift */,
+				CD5C946D2F8C81A8009A5793 /* GIFHistoryEntry.swift */,
 				AB000010 /* SupportedPlatform.swift */,
 				AB000011 /* VideoMetadata.swift */,
 				AB000012 /* ExtractionRequest.swift */,
@@ -105,6 +218,7 @@
 		AE000004 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				CD5C948A2F8C8273009A5793 /* Gallery */,
 				AB000002 /* ContentView.swift */,
 				AE000010 /* Home */,
 				AE000011 /* Player */,
@@ -114,9 +228,98 @@
 			path = Views;
 			sourceTree = "<group>";
 		};
+		AE000005 /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				CD5C948E2F8C8AF6009A5793 /* ExportViewModel.swift */,
+				CD5C948F2F8C8AF6009A5793 /* HomeViewModel.swift */,
+				CD5C94902F8C8AF6009A5793 /* TrimViewModel.swift */,
+				AB000005 /* ViewModels.swift */,
+			);
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		AE000006 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				CD5C94942F9032F1009A5793 /* FreemiumGatekeeper.swift */,
+				CD5C94952F9032F1009A5793 /* SubscriptionManager.swift */,
+				CD5C94702F8C81C4009A5793 /* APIService.swift */,
+				CD5C94712F8C81C4009A5793 /* ClipboardMonitor.swift */,
+				CD5C94722F8C81C4009A5793 /* Configuration.swift */,
+				CD5C94732F8C81C4009A5793 /* ExportManager.swift */,
+				CD5C94742F8C81C4009A5793 /* FilmstripGenerator.swift */,
+				CD5C94752F8C81C4009A5793 /* GIFEncoder.swift */,
+				CD5C94762F8C81C4009A5793 /* GIFHistoryStore.swift */,
+				CD5C94772F8C81C4009A5793 /* VideoPlayerManager.swift */,
+				AB000006 /* Services.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		AE000007 /* Utilities */ = {
+			isa = PBXGroup;
+			children = (
+				CD5C94802F8C81D2009A5793 /* DesignTokens.swift */,
+				AB000007 /* Utilities.swift */,
+			);
+			path = Utilities;
+			sourceTree = "<group>";
+		};
+		AE000008 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				CD5C942C2F8C7FFA009A5793 /* JetBrainsMono-Bold.ttf */,
+				CD5C942D2F8C7FFA009A5793 /* JetBrainsMono-BoldItalic.ttf */,
+				CD5C942E2F8C7FFA009A5793 /* JetBrainsMono-ExtraBold.ttf */,
+				CD5C942F2F8C7FFA009A5793 /* JetBrainsMono-ExtraBoldItalic.ttf */,
+				CD5C94302F8C7FFA009A5793 /* JetBrainsMono-ExtraLight.ttf */,
+				CD5C94312F8C7FFA009A5793 /* JetBrainsMono-ExtraLightItalic.ttf */,
+				CD5C94322F8C7FFA009A5793 /* JetBrainsMono-Italic.ttf */,
+				CD5C94332F8C7FFA009A5793 /* JetBrainsMono-Light.ttf */,
+				CD5C94342F8C7FFA009A5793 /* JetBrainsMono-LightItalic.ttf */,
+				CD5C94352F8C7FFA009A5793 /* JetBrainsMono-Medium.ttf */,
+				CD5C94362F8C7FFA009A5793 /* JetBrainsMono-MediumItalic.ttf */,
+				CD5C94372F8C7FFA009A5793 /* JetBrainsMono-Regular.ttf */,
+				CD5C94382F8C7FFA009A5793 /* JetBrainsMono-SemiBold.ttf */,
+				CD5C94392F8C7FFA009A5793 /* JetBrainsMono-SemiBoldItalic.ttf */,
+				CD5C943A2F8C7FFA009A5793 /* JetBrainsMono-Thin.ttf */,
+				CD5C943B2F8C7FFA009A5793 /* JetBrainsMono-ThinItalic.ttf */,
+				CD5C943C2F8C7FFA009A5793 /* JetBrainsMonoNL-Bold.ttf */,
+				CD5C943D2F8C7FFA009A5793 /* JetBrainsMonoNL-BoldItalic.ttf */,
+				CD5C943E2F8C7FFA009A5793 /* JetBrainsMonoNL-ExtraBold.ttf */,
+				CD5C943F2F8C7FFA009A5793 /* JetBrainsMonoNL-ExtraBoldItalic.ttf */,
+				CD5C94402F8C7FFA009A5793 /* JetBrainsMonoNL-ExtraLight.ttf */,
+				CD5C94412F8C7FFA009A5793 /* JetBrainsMonoNL-ExtraLightItalic.ttf */,
+				CD5C94422F8C7FFA009A5793 /* JetBrainsMonoNL-Italic.ttf */,
+				CD5C94432F8C7FFA009A5793 /* JetBrainsMonoNL-Light.ttf */,
+				CD5C94442F8C7FFA009A5793 /* JetBrainsMonoNL-LightItalic.ttf */,
+				CD5C94452F8C7FFA009A5793 /* JetBrainsMonoNL-Medium.ttf */,
+				CD5C94462F8C7FFA009A5793 /* JetBrainsMonoNL-MediumItalic.ttf */,
+				CD5C94472F8C7FFA009A5793 /* JetBrainsMonoNL-Regular.ttf */,
+				CD5C94482F8C7FFA009A5793 /* JetBrainsMonoNL-SemiBold.ttf */,
+				CD5C94492F8C7FFA009A5793 /* JetBrainsMonoNL-SemiBoldItalic.ttf */,
+				CD5C944A2F8C7FFA009A5793 /* JetBrainsMonoNL-Thin.ttf */,
+				CD5C944B2F8C7FFA009A5793 /* JetBrainsMonoNL-ThinItalic.ttf */,
+				CD5C94282F8C7FE6009A5793 /* Inter-Italic-VariableFont_opsz,wght.ttf */,
+				CD5C94292F8C7FE6009A5793 /* Inter-VariableFont_opsz,wght.ttf */,
+				AB000008 /* Localizable.strings */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		AE000009 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				AC000001 /* ClipForge.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
 		AE000010 /* Home */ = {
 			isa = PBXGroup;
 			children = (
+				CD5C94822F8C81F8009A5793 /* CTAButtonView.swift */,
 				AB000020 /* HomeView.swift */,
 			);
 			path = Home;
@@ -125,6 +328,8 @@
 		AE000011 /* Player */ = {
 			isa = PBXGroup;
 			children = (
+				CD5C94842F8C8203009A5793 /* TrimBarView.swift */,
+				CD5C94852F8C8203009A5793 /* TrimModalView.swift */,
 				AB000021 /* PlayerView.swift */,
 			);
 			path = Player;
@@ -146,44 +351,12 @@
 			path = Export;
 			sourceTree = "<group>";
 		};
-		AE000005 /* ViewModels */ = {
+		CD5C948A2F8C8273009A5793 /* Gallery */ = {
 			isa = PBXGroup;
 			children = (
-				AB000005 /* ViewModels.swift */,
+				CD5C94892F8C8273009A5793 /* MediaLibraryView.swift */,
 			);
-			path = ViewModels;
-			sourceTree = "<group>";
-		};
-		AE000006 /* Services */ = {
-			isa = PBXGroup;
-			children = (
-				AB000006 /* Services.swift */,
-			);
-			path = Services;
-			sourceTree = "<group>";
-		};
-		AE000007 /* Utilities */ = {
-			isa = PBXGroup;
-			children = (
-				AB000007 /* Utilities.swift */,
-			);
-			path = Utilities;
-			sourceTree = "<group>";
-		};
-		AE000008 /* Resources */ = {
-			isa = PBXGroup;
-			children = (
-				AB000008 /* Localizable.strings */,
-			);
-			path = Resources;
-			sourceTree = "<group>";
-		};
-		AE000009 /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				AC000001 /* ClipForge.app */,
-			);
-			name = Products;
+			path = Gallery;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -244,6 +417,40 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CD5C942A2F8C7FE6009A5793 /* Inter-VariableFont_opsz,wght.ttf in Resources */,
+				CD5C942B2F8C7FE6009A5793 /* Inter-Italic-VariableFont_opsz,wght.ttf in Resources */,
+				CD5C944C2F8C7FFA009A5793 /* JetBrainsMono-Bold.ttf in Resources */,
+				CD5C944D2F8C7FFA009A5793 /* JetBrainsMonoNL-Medium.ttf in Resources */,
+				CD5C944E2F8C7FFA009A5793 /* JetBrainsMonoNL-SemiBoldItalic.ttf in Resources */,
+				CD5C944F2F8C7FFA009A5793 /* JetBrainsMono-SemiBold.ttf in Resources */,
+				CD5C94502F8C7FFA009A5793 /* JetBrainsMono-Thin.ttf in Resources */,
+				CD5C94512F8C7FFA009A5793 /* JetBrainsMonoNL-ExtraLight.ttf in Resources */,
+				CD5C94522F8C7FFA009A5793 /* JetBrainsMonoNL-ThinItalic.ttf in Resources */,
+				CD5C94532F8C7FFA009A5793 /* JetBrainsMono-Light.ttf in Resources */,
+				CD5C94542F8C7FFA009A5793 /* JetBrainsMonoNL-BoldItalic.ttf in Resources */,
+				CD5C94552F8C7FFA009A5793 /* JetBrainsMonoNL-ExtraBold.ttf in Resources */,
+				CD5C94562F8C7FFA009A5793 /* JetBrainsMono-BoldItalic.ttf in Resources */,
+				CD5C94572F8C7FFA009A5793 /* JetBrainsMonoNL-SemiBold.ttf in Resources */,
+				CD5C94582F8C7FFA009A5793 /* JetBrainsMono-ThinItalic.ttf in Resources */,
+				CD5C94592F8C7FFA009A5793 /* JetBrainsMono-ExtraLight.ttf in Resources */,
+				CD5C945A2F8C7FFA009A5793 /* JetBrainsMono-ExtraBoldItalic.ttf in Resources */,
+				CD5C945B2F8C7FFA009A5793 /* JetBrainsMonoNL-LightItalic.ttf in Resources */,
+				CD5C945C2F8C7FFA009A5793 /* JetBrainsMonoNL-MediumItalic.ttf in Resources */,
+				CD5C945D2F8C7FFA009A5793 /* JetBrainsMonoNL-Thin.ttf in Resources */,
+				CD5C945E2F8C7FFA009A5793 /* JetBrainsMonoNL-ExtraBoldItalic.ttf in Resources */,
+				CD5C945F2F8C7FFA009A5793 /* JetBrainsMonoNL-Regular.ttf in Resources */,
+				CD5C94602F8C7FFA009A5793 /* JetBrainsMono-ExtraLightItalic.ttf in Resources */,
+				CD5C94612F8C7FFA009A5793 /* JetBrainsMono-Regular.ttf in Resources */,
+				CD5C94622F8C7FFA009A5793 /* JetBrainsMono-ExtraBold.ttf in Resources */,
+				CD5C94632F8C7FFA009A5793 /* JetBrainsMono-Italic.ttf in Resources */,
+				CD5C94642F8C7FFA009A5793 /* JetBrainsMono-SemiBoldItalic.ttf in Resources */,
+				CD5C94652F8C7FFA009A5793 /* JetBrainsMonoNL-ExtraLightItalic.ttf in Resources */,
+				CD5C94662F8C7FFA009A5793 /* JetBrainsMonoNL-Italic.ttf in Resources */,
+				CD5C94672F8C7FFA009A5793 /* JetBrainsMonoNL-Bold.ttf in Resources */,
+				CD5C94682F8C7FFA009A5793 /* JetBrainsMono-LightItalic.ttf in Resources */,
+				CD5C94692F8C7FFA009A5793 /* JetBrainsMono-Medium.ttf in Resources */,
+				CD5C946A2F8C7FFA009A5793 /* JetBrainsMono-MediumItalic.ttf in Resources */,
+				CD5C946B2F8C7FFA009A5793 /* JetBrainsMonoNL-Light.ttf in Resources */,
 				AA000003 /* Assets.xcassets in Resources */,
 				AA000008 /* Localizable.strings in Resources */,
 			);
@@ -256,21 +463,42 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CD5C94862F8C8203009A5793 /* TrimBarView.swift in Sources */,
+				CD5C948B2F8C8273009A5793 /* MediaLibraryView.swift in Sources */,
+				CD5C94872F8C8203009A5793 /* TrimModalView.swift in Sources */,
 				AA000001 /* ClipForgeApp.swift in Sources */,
 				AA000002 /* ContentView.swift in Sources */,
 				AA000005 /* ViewModels.swift in Sources */,
 				AA000006 /* Services.swift in Sources */,
+				CD5C94782F8C81C4009A5793 /* FilmstripGenerator.swift in Sources */,
+				CD5C94792F8C81C4009A5793 /* GIFHistoryStore.swift in Sources */,
+				CD5C948D2F8C8A49009A5793 /* ImportState.swift in Sources */,
+				CD5C947A2F8C81C4009A5793 /* Configuration.swift in Sources */,
+				CD5C947B2F8C81C4009A5793 /* GIFEncoder.swift in Sources */,
+				CD5C947C2F8C81C4009A5793 /* VideoPlayerManager.swift in Sources */,
+				CD5C947D2F8C81C4009A5793 /* APIService.swift in Sources */,
+				CD5C947E2F8C81C4009A5793 /* ClipboardMonitor.swift in Sources */,
+				CD5C947F2F8C81C4009A5793 /* ExportManager.swift in Sources */,
 				AA000007 /* Utilities.swift in Sources */,
+				CD5C94912F8C8AF6009A5793 /* ExportViewModel.swift in Sources */,
+				CD5C94922F8C8AF6009A5793 /* HomeViewModel.swift in Sources */,
+				CD5C94932F8C8AF6009A5793 /* TrimViewModel.swift in Sources */,
 				AA000010 /* SupportedPlatform.swift in Sources */,
 				AA000011 /* VideoMetadata.swift in Sources */,
 				AA000012 /* ExtractionRequest.swift in Sources */,
 				AA000013 /* ExtractionResponse.swift in Sources */,
 				AA000014 /* QualityPreset.swift in Sources */,
+				CD5C94832F8C81F8009A5793 /* CTAButtonView.swift in Sources */,
 				AA000015 /* GIFConfiguration.swift in Sources */,
 				AA000016 /* ClipForgeError.swift in Sources */,
+				CD5C94962F9032F1009A5793 /* SubscriptionManager.swift in Sources */,
+				CD5C94972F9032F1009A5793 /* FreemiumGatekeeper.swift in Sources */,
 				AA000017 /* APIErrorResponse.swift in Sources */,
 				AA000020 /* HomeView.swift in Sources */,
 				AA000021 /* PlayerView.swift in Sources */,
+				CD5C94812F8C81D2009A5793 /* DesignTokens.swift in Sources */,
+				CD5C946E2F8C81A8009A5793 /* GIFHistoryEntry.swift in Sources */,
+				CD5C946F2F8C81A8009A5793 /* AppRoute.swift in Sources */,
 				AA000022 /* GIFSettingsView.swift in Sources */,
 				AA000023 /* ExportSuccessView.swift in Sources */,
 			);

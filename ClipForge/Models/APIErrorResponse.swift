@@ -39,6 +39,8 @@ struct APIErrorResponse: Decodable, Sendable {
     // MARK: - Mapping
 
     /// Converts the backend error code into the appropriate `ClipForgeError` case.
+    ///
+    /// Covers all 12 error codes from API Contract §4.
     func toClipForgeError() -> ClipForgeError {
         switch errorCode {
         case "INVALID_URL":
@@ -48,7 +50,7 @@ struct APIErrorResponse: Decodable, Sendable {
             return .unsupportedPlatform(message)
 
         case "VIDEO_TOO_LONG":
-            return .extractionFailed(platform: "", detail: message)
+            return .videoTooLong
 
         case "EXTRACTION_FAILED":
             return .extractionFailed(platform: "", detail: message)
@@ -57,22 +59,25 @@ struct APIErrorResponse: Decodable, Sendable {
             return .extractionTimeout
 
         case "PLATFORM_UNAVAILABLE":
-            return .extractionFailed(platform: "", detail: message)
+            return .platformUnavailable
 
         case "RATE_LIMITED":
             return .rateLimited(retryAfter: retryAfter ?? 60)
 
         case "UNAUTHORIZED":
-            return .serverUnreachable
+            return .unauthorized
+
+        case "SERVER_ERROR":
+            return .serverError
+
+        case "INVALID_TOKEN":
+            return .invalidToken
 
         case "EXPIRED_MEDIA":
             return .mediaExpired
 
         case "MEDIA_NOT_FOUND":
-            return .mediaExpired
-
-        case "INVALID_TOKEN":
-            return .mediaExpired
+            return .mediaNotFound
 
         default:
             return .extractionFailed(platform: "", detail: message)
