@@ -41,19 +41,19 @@ struct HomeView: View {
 
                 Spacer()
 
-                #if DEBUG
-                // TEMPORARY: Manual URL input for Simulator testing.
-                // Pasteboard sync is broken — this bypasses ClipboardMonitor.
-                // Remove before TestFlight / App Store builds.
-                debugURLInput
-                    .padding(.horizontal, 32)
-                    .padding(.bottom, 12)
-                #endif
-
                 // CTA button + label
                 ctaSection
 
                 Spacer()
+
+                #if DEBUG
+                // TEMPORARY: Manual URL input for Simulator testing.
+                // Pasteboard sync is broken — bypasses ClipboardMonitor.
+                // Remove before TestFlight / App Store builds.
+                debugURLInput
+                    .padding(.horizontal, 24)
+                    .padding(.bottom, 8)
+                #endif
 
                 // Platform list
                 platformList
@@ -162,33 +162,46 @@ struct HomeView: View {
 
     #if DEBUG
     private var debugURLInput: some View {
-        HStack(spacing: 8) {
-            TextField("Paste URL here", text: $debugURLText)
-                .font(.system(size: 12, design: .monospaced))
-                .textFieldStyle(.roundedBorder)
-                .autocorrectionDisabled()
-                .textInputAutocapitalization(.never)
-                .keyboardType(.URL)
+        VStack(spacing: 6) {
+            Text("DEBUG: Simulator clipboard workaround")
+                .font(.system(size: 10))
+                .foregroundStyle(.gray)
 
-            Button {
-                let trimmed = debugURLText.trimmingCharacters(in: .whitespacesAndNewlines)
-                guard let url = URL(string: trimmed),
-                      (url.scheme == "http" || url.scheme == "https") else {
-                    print("DEBUG: invalid URL — \(debugURLText)")
-                    return
+            HStack(spacing: 8) {
+                TextField("Paste URL here for testing", text: $debugURLText)
+                    .font(.system(size: 12, design: .monospaced))
+                    .foregroundStyle(.primary)
+                    .textFieldStyle(.roundedBorder)
+                    .autocorrectionDisabled()
+                    .textInputAutocapitalization(.never)
+                    .keyboardType(.URL)
+
+                Button {
+                    let trimmed = debugURLText.trimmingCharacters(in: .whitespacesAndNewlines)
+                    guard let url = URL(string: trimmed),
+                          (url.scheme == "http" || url.scheme == "https") else {
+                        print("DEBUG: invalid URL — \"\(debugURLText)\"")
+                        return
+                    }
+
+                    // Replicate the production handoff:
+                    // ClipboardMonitor sets detectedURL/detectedPlatform →
+                    // Combine sink sets importState → user taps CTA → startImport().
+                    // We set importState directly (ClipboardMonitor props are private(set))
+                    // then call startImport() — same performImport() code path.
+                    let platform = SupportedPlatform.platform(forURL: url)?.displayName ?? "Unknown"
+                    print("DEBUG: injecting URL into pipeline — \(url.absoluteString) (\(platform))")
+                    viewModel.importState = .urlDetected(url: url, platform: platform)
+                    viewModel.startImport()
+                } label: {
+                    Text("Test Import")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 5)
+                        .background(Color.gray.opacity(0.7))
+                        .clipShape(RoundedRectangle(cornerRadius: 5))
                 }
-                let platform = SupportedPlatform.platform(forURL: url)?.displayName ?? "Unknown"
-                print("DEBUG: injecting URL into pipeline — \(url.absoluteString) (\(platform))")
-                viewModel.importState = .urlDetected(url: url, platform: platform)
-                viewModel.startImport()
-            } label: {
-                Text("Import")
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
-                    .background(Color.gray)
-                    .clipShape(RoundedRectangle(cornerRadius: 6))
             }
         }
     }
