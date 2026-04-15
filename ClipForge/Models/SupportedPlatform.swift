@@ -42,7 +42,7 @@ enum SupportedPlatform: String, Codable, CaseIterable, Sendable {
     var hostPatterns: [String] {
         switch self {
         case .twitter:
-            return ["twitter.com", "x.com", "mobile.twitter.com", "m.twitter.com"]
+            return ["twitter.com", "www.twitter.com", "x.com", "www.x.com", "mobile.twitter.com", "m.twitter.com"]
         case .instagram:
             return ["instagram.com", "www.instagram.com", "m.instagram.com"]
         case .reddit:
@@ -54,6 +54,44 @@ enum SupportedPlatform: String, Codable, CaseIterable, Sendable {
         }
     }
 
+    // MARK: - Path Patterns
+
+    /// Regex patterns that validate the URL path for this platform.
+    /// If any pattern matches the URL's path, the URL is considered valid
+    /// for this platform. An empty array means any path is accepted
+    /// (used for shortlink domains like t.co and vm.tiktok.com).
+    var pathPatterns: [String] {
+        switch self {
+        case .twitter:
+            // /user/status/1234, or shortlink (t.co has no path validation)
+            return [
+                #"^/[^/]+/status/\d+"#,  // twitter.com/{user}/status/{id}
+                #"^/[A-Za-z0-9]+"#       // t.co/{shortcode}
+            ]
+        case .instagram:
+            return [
+                #"^/(reel|p)/[^/]+"#,              // /reel/{id} or /p/{id}
+                #"^/stories/[^/]+/\d+"#             // /stories/{user}/{id}
+            ]
+        case .reddit:
+            return [
+                #"^/r/[^/]+/comments/[^/]+"#,      // /r/{sub}/comments/{id}/...
+                #"^/[A-Za-z0-9]+"#                  // v.redd.it/{id}
+            ]
+        case .tiktok:
+            return [
+                #"^/@[^/]+/video/\d+"#,             // /@{user}/video/{id}
+                #"^/t/[^/]+"#,                      // /t/{shortcode}
+                #"^/[A-Za-z0-9]+"#                  // vm.tiktok.com/{shortcode}
+            ]
+        case .twitch:
+            return [
+                #"^/[^/]+/clip/[^/]+"#,             // /{channel}/clip/{slug}
+                #"^/[A-Za-z0-9]"#                   // clips.twitch.tv/{slug}
+            ]
+        }
+    }
+
     // MARK: - Lookup
 
     /// Returns the platform matching a given hostname, or `nil` if unsupported.
@@ -62,5 +100,41 @@ enum SupportedPlatform: String, Codable, CaseIterable, Sendable {
         return allCases.first { platform in
             platform.hostPatterns.contains(normalizedHost)
         }
+    }
+
+    /// Returns the platform for a full URL, validating both host and path.
+    /// Returns `nil` if the host is unrecognized or the path doesn't match
+    /// any expected pattern for the detected platform.
+    static func platform(forURL url: URL) -> SupportedPlatform? {
+        guard let host = url.host?.lowercased(),
+              let platform = platform(forHost: host) else {
+            return nil
+        }
+
+        let path = url.path
+        // Shortlink domains accept any path
+        let shortlinkHosts = ["t.co", "vm.tiktok.com", "v.redd.it"]
+        if shortlinkHosts.contains(host) && !path.isEmpty && path != "/" {
+            return platform
+        }
+
+        // Validate path against platform patterns
+        return platform.pathPatterns.contains { pattern in
+            path.range(of: pattern, options: .regularExpression) != nil
+        } ? platform : nil
+    }
+
+    // MARK: - YouTube Detection
+
+    /// Hostnames that identify a YouTube URL. Detected and rejected in the MVP.
+    static let youTubeHosts: Set<String> = [
+        "youtube.com", "www.youtube.com", "m.youtube.com",
+        "youtu.be", "music.youtube.com"
+    ]
+
+    /// Returns `true` if the given URL belongs to YouTube.
+    static func isYouTubeURL(_ url: URL) -> Bool {
+        guard let host = url.host?.lowercased() else { return false }
+        return youTubeHosts.contains(host)
     }
 }
