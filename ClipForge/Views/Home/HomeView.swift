@@ -16,6 +16,11 @@ struct HomeView: View {
     @ObservedObject var viewModel: HomeViewModel
     @Environment(\.scenePhase) private var scenePhase
 
+    // Subscription sheet + restore feedback
+    @State private var showSubscription = false
+    @State private var restoreFeedback: String?
+    @State private var showRestoreFeedback = false
+
     #if DEBUG
     @State private var debugURLText = ""
     #endif
@@ -83,6 +88,22 @@ struct HomeView: View {
                 )
             }
         }
+        .sheet(isPresented: $showSubscription) {
+            SubscriptionView()
+        }
+        .overlay(alignment: .bottom) {
+            if showRestoreFeedback, let message = restoreFeedback {
+                Text(message)
+                    .font(CFFont.jetBrainsMono(size: 14))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 12)
+                    .background(Capsule().fill(Color.cfDarkBase))
+                    .padding(.bottom, 60)
+                    .transition(.opacity.combined(with: .move(edge: .bottom)))
+                    .animation(.easeInOut(duration: 0.3), value: showRestoreFeedback)
+            }
+        }
     }
 
     // MARK: - Top Bar
@@ -95,10 +116,25 @@ struct HomeView: View {
 
             Spacer()
 
-            // Menu button — placeholder for Epic 1 menu story
+            // Menu button (STORY-8.4)
             Menu {
-                Button("Restore Purchase") { }
-                Button("Privacy Policy") { }
+                Button("Restore Purchase") {
+                    Task {
+                        let found = await SubscriptionManager.shared.restorePurchases()
+                        restoreFeedback = found
+                            ? "Purchase restored!"
+                            : "No active subscription found"
+                        showRestoreFeedback = true
+
+                        try? await Task.sleep(for: .seconds(2.5))
+                        showRestoreFeedback = false
+                    }
+                }
+                Button("Privacy Policy") {
+                    if let url = URL(string: "https://clipforge.app/privacy") {
+                        UIApplication.shared.open(url)
+                    }
+                }
                 Button("About ClipForge") { }
             } label: {
                 Image(systemName: "ellipsis.circle")
