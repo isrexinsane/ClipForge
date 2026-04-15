@@ -2,8 +2,8 @@
 title: "CLAUDE.md — ClipForge Master Context"
 project: ClipForge
 type: master-context
-version: 1.2
-date: 2026-04-11
+version: 1.3
+date: 2026-04-15
 status: active
 bmad_phase: "Phase 4 — Validation & Sharding (Complete)"
 tags: [clipforge, bmad, ios, gif, master-context]
@@ -423,6 +423,11 @@ Confirmed design decisions that update or override original BMAD artifacts. Each
 | 2026-04-12 | **GIFHistoryStore singleton.** UserDefaults-backed, @MainActor, newest-first ordering. | Simplest persistence for MVP. Can migrate to SwiftData post-launch if needed. | Developer (Epic 6) |
 | 2026-04-12 | **ImportState extracted to standalone file.** Moved from HomeViewModel.swift to Models/ImportState.swift. | Prevents cascade compilation failures when HomeViewModel has any issue. Discovered during first Xcode build. | Developer (Build Fix) |
 | 2026-04-12 | **Inter variable font.** Info.plist updated to reference `Inter-VariableFont_opsz,wght.ttf` instead of static `Inter-Regular.ttf`/`Inter-Medium.ttf`. CFFont.inter() uses `.weight()` modifier. | Rex downloaded variable font version; static files don't exist. Variable font approach is cleaner (one file, all weights). | Developer (Build Fix) |
+| 2026-04-15 | **EXTRACT-CONFIG RESOLVED.** IPRoyal residential proxy + Instagram cookies + Reddit timeout extension + yt-dlp nightly + MP4 format preference. | Datacenter IPs blocked by all social platforms. Residential proxy + platform-specific configs resolve 3/5 platforms. | Backend (Railway env vars), Master_Session_Handoff_2026-04-15.md |
+| 2026-04-15 | **FreemiumGatekeeper service.** UserDefaults-backed daily counter with midnight reset. `@MainActor` singleton, `canExport` / `remainingExports` computed properties. | Enforces 1/day free limit. Premium bypass via `isPremium` flag synced from SubscriptionManager. | Developer (Epic 7) |
+| 2026-04-15 | **Watermark: monospace text treatment.** "CLIPFORGE" rendered via CoreGraphics at 50% opacity, white with black shadow, bottom-right. Free tier only. | Placeholder until final logomark branding. `applyWatermark(to:)` method in GIFEncoder. Skipped when `isPremium = true`. | Developer (Epic 7) |
+| 2026-04-15 | **Subscription presentation DEFERRED.** SubscriptionView cannot compile inside `.sheet` on TrimModalView (SwiftUI type-checker cascade). Upgrade button stubbed with `print("TODO")`. | Five successive fix attempts failed. Root cause: TrimModalView body complexity exceeds Swift type-checker limits when adding another `.sheet` modifier chain. Needs separate wrapper view approach. | Developer (Epic 8) |
+| 2026-04-15 | **App launch entitlement check.** `SubscriptionManager.shared.checkEntitlements()` called in `.task` on ContentView. | Syncs premium status from iCloud/StoreKit on every app launch. Handles cross-device purchases and subscription renewals/expirations. | Developer (Epic 8) |
 
 ---
 
@@ -434,7 +439,7 @@ This section tracks the current state of the BMAD pipeline. Update it after ever
 
 ```
 PHASE 10 — INTEGRATION & POLISH (SM/Dev/QA)
-Status: NOT STARTED — End-to-end flow testing, error handling, polish
+Status: IN PROGRESS — EXTRACT-CONFIG resolved, Epics 7–8 code complete, platform testing partial (3/5)
 ```
 
 ### Phase History
@@ -451,17 +456,18 @@ Status: NOT STARTED — End-to-end flow testing, error handling, polish
 | Phase 7: Video Import Flow (SM/Dev/QA) | ✅ Complete | 2026-04-12 | Epic 3: 5 stories (STORY-009 through STORY-013). APIService, ClipboardMonitor, HomeViewModel, CTA progress ring, VideoPlayerManager + Trim Modal shell. |
 | Phase 8: Trim Interface (SM/Dev/QA) | ✅ Complete | 2026-04-12 | Epic 4: 5 stories (STORY-014 through STORY-018). TrimViewModel, FilmstripGenerator, TrimBarView, Duration Readout, CREATE button, font setup. |
 | Phase 9: GIF Engine + Export (SM/Dev/QA) | ✅ Complete | 2026-04-12 | Epics 5+6: 5 stories (STORY-019 through STORY-023). GIFEncoder, ExportViewModel, ExportManager (PHPhotoLibrary), export success UI, ShareSheet, Media Library grid. |
-| Phase 10: Integration & Polish (SM/Dev/QA) | ⬜ Not Started | — | End-to-end flow, error handling |
+| Phase 10: Integration & Polish (SM/Dev/QA) | 🔄 In Progress | — | EXTRACT-CONFIG resolved. Epics 7–8 code complete. Platform testing: Twitter ✅, Twitch ✅, Instagram ⚠️ (HEVC), Reddit ⚠️ (timeout), TikTok ❌ (403). |
 | Phase 11: TestFlight Beta (Human) | ⬜ Not Started | — | Beta builds, bug fixes |
 | Phase 12: App Store Submission (Human) | ⬜ Not Started | — | Listing, screenshots, submission |
 
 ### Next Actions
 
-1. CRITICAL: Resolve EXTRACT-CONFIG — yt-dlp proxy/cookie configuration in Railway to unblock end-to-end testing
-2. Stage 3 Mega-Checkpoint — full end-to-end test across all five platforms
-3. PO Full Validation — cross-reference PRD F-01 through F-07
-4. Stage 4 — Epic 7 (Freemium: 1/day limit + watermark) and Epic 8 (StoreKit 2: $9.99/yr)
-5. Stage 5 — Epics 9–11 (Onboarding, polish, App Store submission)
+1. Fix SUBSCRIPTION-PRESENTATION — Wire SubscriptionView from TrimModalView via separate wrapper view
+2. Fix INSTAGRAM-CODEC — Add `--recode-video mp4` / `-S vcodec:h264` for Instagram extractions
+3. Investigate TIKTOK-FIX — TikTok returns 403 even through proxy; may need cookies or browser headers
+4. Stage 3 Mega-Checkpoint — Full end-to-end GIF creation test on working platforms (Twitter, Twitch, Reddit)
+5. PO Full Validation — Cross-reference PRD F-01 through F-08 against implemented code
+6. Stage 5 — Epics 9–11 (Onboarding, visual polish, App Store submission)
 
 ### Completed Stories
 
@@ -490,12 +496,24 @@ Status: NOT STARTED — End-to-end flow testing, error handling, polish
 | STORY-021 | Epic 6: Camera Roll Export | Camera Roll Save — PHPhotoLibrary Integration | ✅ Complete | 2026-04-12 |
 | STORY-022 | Epic 6: Camera Roll Export | Export Success State — GIF Preview, Share, and Done | ✅ Complete | 2026-04-12 |
 | STORY-023 | Epic 6: Camera Roll Export | Media Library — GIF History Grid | ✅ Complete | 2026-04-12 |
+| STORY-7.1 | Epic 7: Freemium Gating | FreemiumGatekeeper — Daily Limit Service | ✅ Complete | 2026-04-15 |
+| STORY-7.2 | Epic 7: Freemium Gating | Watermark Compositing in GIFEncoder | ✅ Complete | 2026-04-15 |
+| STORY-7.3 | Epic 7: Freemium Gating | CREATE Button Freemium Gate in TrimModalView | ✅ Complete | 2026-04-15 |
+| STORY-7.4 | Epic 7: Freemium Gating | Export Counter Display on Success State | ✅ Complete | 2026-04-15 |
+| STORY-8.1 | Epic 8: StoreKit 2 Subscription | SubscriptionManager — StoreKit 2 Service | ✅ Complete | 2026-04-15 |
+| STORY-8.2 | Epic 8: StoreKit 2 Subscription | SubscriptionView — Purchase Screen (minimal) | ✅ Complete | 2026-04-15 |
+| STORY-8.3 | Epic 8: StoreKit 2 Subscription | App Launch Entitlement Check + Menu Restore | ✅ Complete | 2026-04-15 |
+| STORY-8.4 | Epic 8: StoreKit 2 Subscription | Menu Button Integration (HomeView) | ✅ Complete | 2026-04-15 |
 
-### Sprint 2 Backlog — Open Items
+### Sprint 3 Backlog — Open Items
 
 | Item | Priority | Status | Description |
 |------|----------|--------|-------------|
-| EXTRACT-CONFIG | CRITICAL | Open | yt-dlp cookie/proxy configuration to resolve datacenter IP blocking on Railway. All five platform extractions return 502. Blocks all end-to-end testing. Fix: configure yt-dlp with residential proxy or session cookies. |
+| EXTRACT-CONFIG | CRITICAL | ✅ Resolved | Resolved 2026-04-15. IPRoyal residential proxy, Instagram cookies, Reddit timeout, yt-dlp nightly, MP4 format preference. See Master_Session_Handoff_2026-04-15.md §4. |
+| SUBSCRIPTION-PRESENTATION | Medium | Open | SubscriptionView cannot compile inside `.sheet` on TrimModalView (SwiftUI type-checker cascade). Upgrade button stubbed. Needs wrapper view or alternative presentation. |
+| TIKTOK-FIX | Medium | Open | TikTok returns 403 even through residential proxy. Needs cookies, browser headers, or `--extractor-args` investigation. |
+| INSTAGRAM-CODEC | Medium | Open | Instagram returns HEVC (H.265) video. Add `--recode-video mp4` or `-S vcodec:h264` for Instagram-specific extractions. |
+| MEDIA-LIBRARY-LAYOUT | Low | Open | Media Library grid needs visual polish — spacing, empty state, thumbnail sizing. Epic 10 scope. |
 | AUTH-FIX | Low | Open | FastAPI returns 422 for missing API key header; API Contract §4 specifies 401. Minor backend middleware fix. |
 | Concurrency Warnings | Low | Open | 7 Swift Sendable warnings in ExportViewModel, TrimViewModel, VideoPlayerManager. Non-blocking. Epic 10 scope. |
 | Visual Polish | Medium | Open | UI renders but doesn't match Figma designs (gradients, spacing, colors). Epic 10 scope. |
@@ -505,6 +523,8 @@ Status: NOT STARTED — End-to-end flow testing, error handling, polish
 | Date | Scope | Result | Notes |
 |------|-------|--------|-------|
 | 2026-04-11 | Sprint 1 Backend Smoke Test | 11/11 PASS | Health, auth, validation all correct. Extractions return proper 502s due to datacenter IP blocking (infrastructure, not code). Full report in project chat history. |
+| 2026-04-15 | EXTRACT-CONFIG Resolution | RESOLVED | IPRoyal proxy configured. Twitter ✅, Twitch ✅, Instagram ⚠️ (HEVC codec), Reddit ⚠️ (transient timeout), TikTok ❌ (upstream 403), YouTube ✅ (correctly rejected). |
+| 2026-04-15 | Epics 7–8 Code Review | CODE COMPLETE | FreemiumGatekeeper, watermark, gate, counter, SubscriptionManager, SubscriptionView (minimal), entitlement check, menu integration. Subscription presentation deferred (type-checker issue). |
 
 ---
 
@@ -513,7 +533,7 @@ Status: NOT STARTED — End-to-end flow testing, error handling, polish
 | File | Purpose | Status |
 |------|---------|--------|
 | `ClipForge_Feasibility_Report.docx` | Canonical feasibility analysis. Source of truth for all strategic decisions. | ✅ Complete (Chat only) |
-| `CLAUDE.md` (this file) | Master project context. First file read by any Claude instance. | ✅ v1.2 |
+| `CLAUDE.md` (this file) | Master project context. First file read by any Claude instance. | ✅ v1.3 |
 | `Project_Brief.md` | Market opportunity validation, competitive landscape, user personas, value proposition. Analyst agent output. | ✅ Complete (Chat only) |
 | `PRD.md` | Product Requirements Document. Features, user flows, acceptance criteria, MVP scope, non-functional requirements, success metrics. PM agent output. | ✅ Complete |
 | `Architecture_Spec.md` | Full architecture specification. System design, MVVM pattern, data flow, performance architecture, security considerations. Architect agent output. | ✅ Complete |
@@ -531,7 +551,9 @@ Status: NOT STARTED — End-to-end flow testing, error handling, polish
 | `03 — Design/Supplemental_Handoff_2026-04-12.md` | Supplemental handoff: 6 final design decisions wrapping up Phase 5. CREATE GIF loading ring, in-modal encoding/export states, media library interaction, menu button, Phase 5 closure. | ✅ Complete |
 | `APP_STORE_STRATEGY.md` | Operational compliance playbook. Banned terms, required language, review tactics, listing copy templates. | ✅ Complete |
 | `BMAD_LOG.md` | Running log of agent decisions, approvals, and phase transitions. Reverse chronological. | ✅ Active |
-| `Master_Session_Handoff_2026-04-12.md` | Supersedes all previous handoff documents. Complete project state as of first Xcode build. Covers Phase 5 completion through Epics 3–6, build fixes, simulator results. | ✅ Complete |
+| `Master_Session_Handoff_2026-04-12.md` | Previous handoff. Project state as of first Xcode build. Covers Phase 5 completion through Epics 3–6, build fixes, simulator results. | ✅ Complete (superseded) |
+| `Master_Session_Handoff_2026-04-15.md` | Current handoff. EXTRACT-CONFIG resolution, platform testing, Epics 7–8, backend config reference. Supersedes April 12 handoff. | ✅ Complete |
+| `Stage3_Mega_Checkpoint_Test_Plan.md` | End-to-end test plan with actual platform results from April 15 testing session. | ✅ Complete |
 | Karpathy Guidelines (integrated) | Behavioral coding principles for Claude Code sessions. Prevents overcomplication, silent assumptions, orthogonal edits. Source: `github.com/forrestchang/andrej-karpathy-skills` | ✅ Integrated into CLAUDE.md |
 
 ---
