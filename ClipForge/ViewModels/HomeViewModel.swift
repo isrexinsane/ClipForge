@@ -143,10 +143,30 @@ final class HomeViewModel: ObservableObject {
         // Phase 2: Download (determinate progress)
         importState = .downloading(progress: 0.0)
 
+        // Resolve video_url: backend may return a relative path (e.g. "/v1/media/...")
+        // instead of the full URL the API Contract specifies. Handle both cases.
+        let mediaURL: URL
+        if extractionResponse.videoURL.scheme != nil {
+            // Already absolute (has scheme like https://) — use as-is
+            mediaURL = extractionResponse.videoURL
+        } else {
+            // Relative path — prepend the backend origin (scheme + host).
+            // Configuration.baseURL includes /v1 so we use just the origin
+            // to avoid doubling the path prefix.
+            let origin = Configuration.baseURL.scheme! + "://" + Configuration.baseURL.host!
+            guard let resolved = URL(string: origin + extractionResponse.videoURL.absoluteString) else {
+                print("HomeViewModel: could not resolve video_url — \(extractionResponse.videoURL)")
+                importState = .error(message: "Something went wrong. Please try again.")
+                return
+            }
+            mediaURL = resolved
+            print("HomeViewModel: resolved relative video_url → \(mediaURL.absoluteString)")
+        }
+
         let localURL: URL
         do {
             localURL = try await apiService.downloadMedia(
-                from: extractionResponse.videoURL
+                from: mediaURL
             ) { [weak self] progress in
                 Task { @MainActor in
                     guard let self else { return }
