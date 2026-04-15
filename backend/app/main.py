@@ -16,7 +16,7 @@ from fastapi.responses import JSONResponse
 from slowapi.errors import RateLimitExceeded
 
 from app.cleanup import cleanup_loop
-from app.extraction import TEMP_DIR
+from app.extraction import TEMP_DIR, setup_cookies
 from app.routers import extract, health, media
 
 
@@ -30,6 +30,9 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """Manage background tasks across the app's lifetime."""
     # Ensure temp directory exists on startup
     TEMP_DIR.mkdir(parents=True, exist_ok=True)
+
+    # Write cookie files from env vars (EXTRACT-CONFIG)
+    setup_cookies()
 
     # Start the background cleanup task
     cleanup_task = asyncio.create_task(cleanup_loop())

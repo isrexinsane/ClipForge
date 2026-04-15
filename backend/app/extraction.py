@@ -4,6 +4,14 @@ Video extraction service using yt-dlp as an isolated subprocess.
 yt-dlp is invoked via asyncio subprocess (not imported as a library) to
 provide process isolation and timeout control per Architecture Spec §7.3.
 If yt-dlp hangs or crashes, only the subprocess is affected.
+
+Proxy and cookie support (EXTRACT-CONFIG):
+    - YTDLP_PROXY env var: passed as --proxy to yt-dlp. Use a residential
+      proxy URL to avoid datacenter IP blocking by social media platforms.
+    - YTDLP_COOKIES_CONTENT env var: Netscape-format cookie file contents,
+      written to /tmp/clipforge_cookies.txt at startup and passed via --cookies.
+    - INSTAGRAM_SESSION_COOKIE env var: Instagram sessionid cookie value,
+      written to a platform-specific cookie file for Instagram extractions.
 """
 
 import asyncio
@@ -24,6 +32,10 @@ TEMP_DIR.mkdir(parents=True, exist_ok=True)
 # yt-dlp subprocess timeout in seconds
 EXTRACTION_TIMEOUT_SECONDS: int = 30
 
+# Cookie file paths
+COOKIES_FILE = Path("/tmp/clipforge_cookies.txt")
+INSTAGRAM_COOKIES_FILE = Path("/tmp/clipforge_instagram_cookies.txt")
+
 # Platform display names for error messages
 _PLATFORM_DISPLAY_NAMES: dict[str, str] = {
     "twitter": "Twitter/X",
@@ -32,6 +44,82 @@ _PLATFORM_DISPLAY_NAMES: dict[str, str] = {
     "tiktok": "TikTok",
     "twitch": "Twitch",
 }
+
+
+def setup_cookies() -> None:
+    """Write cookie files from environment variables at startup.
+
+    Called during FastAPI lifespan startup. Writes two optional cookie files:
+    1. General cookies from YTDLP_COOKIES_CONTENT (Netscape format, any platform).
+    2. Instagram-specific cookies from INSTAGRAM_SESSION_COOKIE (sessionid only).
+
+    If the env vars are not set, the corresponding files are not created
+    and yt-dlp runs without --cookies for those cases.
+    """
+    # General cookies file
+    cookies_content: str | None = os.environ.get("YTDLP_COOKIES_CONTENT")
+    if cookies_content:
+        COOKIES_FILE.write_text(cookies_content)
+        logger.info("Wrote general cookies file to %s", COOKIES_FILE)
+    else:
+        logger.info("YTDLP_COOKIES_CONTENT not set — no general cookies file")
+
+    # Instagram-specific session cookie
+    ig_session: str | None = os.environ.get("INSTAGRAM_SESSION_COOKIE")
+    if ig_session:
+        # Netscape cookie format: domain, flag, path, secure, expiry, name, value
+        netscape_header = "# Netscape HTTP Cookie File\n"
+        cookie_line = f".instagram.com\tTRUE\t/\tTRUE\t0\tsessionid\t{ig_session}\n"
+        INSTAGRAM_COOKIES_FILE.write_text(netscape_header + cookie_line)
+        logger.info("Wrote Instagram cookies file to %s", INSTAGRAM_COOKIES_FILE)
+    else:
+        logger.info("INSTAGRAM_SESSION_COOKIE not set — no Instagram cookies file")
+
+
+def _build_proxy_args() -> list[str]:
+    """Build --proxy arguments if YTDLP_PROXY is configured.
+
+    Returns:
+        ["--proxy", proxy_url] if configured, else [].
+    """
+    proxy_url: str | None = os.environ.get("YTDLP_PROXY")
+    if proxy_url:
+        return ["--proxy", proxy_url]
+    return []
+
+
+def _build_cookie_args(platform: str) -> list[str]:
+    """Build --cookies arguments based on platform and available cookie files.
+
+    Instagram extractions prefer the Instagram-specific cookie file if it
+    exists. All other platforms use the general cookies file. If neither
+    exists, no --cookies argument is added.
+
+    Args:
+        platform: The detected platform name (e.g., "instagram").
+
+    Returns:
+        ["--cookies", path] if a cookies file exists, else [].
+    """
+    # Instagram-specific cookies take priority for Instagram URLs
+    if platform == "instagram" and INSTAGRAM_COOKIES_FILE.exists():
+        return ["--cookies", str(INSTAGRAM_COOKIES_FILE)]
+
+    # General cookies file for all platforms
+    if COOKIES_FILE.exists():
+        return ["--cookies", str(COOKIES_FILE)]
+
+    return []
+
+
+def is_proxy_configured() -> bool:
+    """Check whether a yt-dlp proxy is configured via environment variable."""
+    return bool(os.environ.get("YTDLP_PROXY"))
+
+
+def is_cookies_configured() -> bool:
+    """Check whether any cookie file exists for yt-dlp."""
+    return COOKIES_FILE.exists() or INSTAGRAM_COOKIES_FILE.exists()
 
 
 @dataclass
@@ -92,6 +180,8 @@ async def extract_video(url: str, platform: str) -> ExtractionResult:
         "-o", output_template,
         "--write-info-json",
         "--no-write-playlist-metafiles",
+        *_build_proxy_args(),
+        *_build_cookie_args(platform),
         url,
     ]
 
