@@ -29,8 +29,11 @@ logger = logging.getLogger(__name__)
 TEMP_DIR = Path("/tmp/clipforge")
 TEMP_DIR.mkdir(parents=True, exist_ok=True)
 
-# yt-dlp subprocess timeout in seconds
+# yt-dlp subprocess timeout in seconds.
+# Reddit requires longer because yt-dlp downloads separate audio + video
+# streams and merges them via ffmpeg, which exceeds 30s through a proxy.
 EXTRACTION_TIMEOUT_SECONDS: int = 30
+REDDIT_EXTRACTION_TIMEOUT_SECONDS: int = 60
 
 # Cookie file paths
 COOKIES_FILE = Path("/tmp/clipforge_cookies.txt")
@@ -162,7 +165,7 @@ async def extract_video(url: str, platform: str) -> ExtractionResult:
 
     Raises:
         ExtractionError: yt-dlp failed (non-zero exit, no output file).
-        ExtractionTimeout: yt-dlp exceeded the 30-second timeout.
+        ExtractionTimeout: yt-dlp exceeded the platform timeout (60s Reddit, 30s others).
     """
     file_id = str(uuid.uuid4())
     output_template = str(TEMP_DIR / f"{file_id}.%(ext)s")
@@ -186,6 +189,7 @@ async def extract_video(url: str, platform: str) -> ExtractionResult:
     ]
 
     display_name = _PLATFORM_DISPLAY_NAMES.get(platform, platform)
+    timeout = REDDIT_EXTRACTION_TIMEOUT_SECONDS if platform == "reddit" else EXTRACTION_TIMEOUT_SECONDS
 
     try:
         # Pass current env to subprocess so it inherits PATH
@@ -199,7 +203,7 @@ async def extract_video(url: str, platform: str) -> ExtractionResult:
 
         stdout, stderr = await asyncio.wait_for(
             process.communicate(),
-            timeout=EXTRACTION_TIMEOUT_SECONDS,
+            timeout=timeout,
         )
 
     except asyncio.TimeoutError:
@@ -209,7 +213,7 @@ async def extract_video(url: str, platform: str) -> ExtractionResult:
             await process.wait()
         except ProcessLookupError:
             pass
-        logger.error("yt-dlp timed out after %ds for %s", EXTRACTION_TIMEOUT_SECONDS, url)
+        logger.error("yt-dlp timed out after %ds for %s", timeout, url)
         raise ExtractionTimeout()
 
     if process.returncode != 0:
