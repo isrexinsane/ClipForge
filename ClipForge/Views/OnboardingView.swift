@@ -17,10 +17,11 @@ import SwiftUI
 struct OnboardingView: View {
 
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
+    @Environment(\.dismiss) private var dismiss
     @State private var currentPage = 0
 
-    /// The three onboarding steps — icon, headline, and body text.
-    private let pages: [(icon: String, headline: String, body: String)] = [
+    /// The three onboarding steps — icon, headline, and subtitle text.
+    private let pages: [(icon: String, headline: String, subtitle: String)] = [
         ("link", "Paste a Link", "Copy a link from your favorite social app"),
         ("scissors", "Trim the Moment", "Trim to the perfect moment"),
         ("sparkles", "Create Your GIF", "Export a GIF in seconds")
@@ -51,7 +52,7 @@ struct OnboardingView: View {
                 OnboardingPageView(
                     icon: pages[index].icon,
                     headline: pages[index].headline,
-                    body: pages[index].body
+                    subtitle: pages[index].subtitle
                 )
                 .tag(index)
             }
@@ -118,6 +119,7 @@ struct OnboardingView: View {
 
     private func completeOnboarding() {
         hasCompletedOnboarding = true
+        dismiss()
     }
 }
 
@@ -130,7 +132,7 @@ private struct OnboardingPageView: View {
 
     let icon: String
     let headline: String
-    let body: String
+    let subtitle: String
 
     var body: some View {
         VStack(spacing: 24) {
@@ -144,7 +146,7 @@ private struct OnboardingPageView: View {
                 .font(CFFont.jetBrainsMono(size: 24, weight: .bold))
                 .foregroundStyle(Color.cfTextPrimary)
 
-            Text(body)
+            Text(subtitle)
                 .font(CFFont.inter(size: 17, weight: .regular))
                 .foregroundStyle(Color.cfTextSecondary)
                 .multilineTextAlignment(.center)
