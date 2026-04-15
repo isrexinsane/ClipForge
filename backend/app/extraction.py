@@ -178,7 +178,7 @@ async def extract_video(url: str, platform: str) -> ExtractionResult:
     cmd = [
         ytdlp_bin,
         "--no-playlist",
-        "-f", "bestvideo[height<=720][ext=mp4]+bestaudio[ext=m4a]/best[height<=720][ext=mp4]/best[height<=720]",
+        "-f", "bestvideo[ext=mp4][height<=720]+bestaudio[ext=m4a]/best[ext=mp4][height<=720]/best[height<=720]",
         "--merge-output-format", "mp4",
         "-o", output_template,
         "--write-info-json",
