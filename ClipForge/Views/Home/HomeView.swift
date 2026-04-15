@@ -16,6 +16,10 @@ struct HomeView: View {
     @ObservedObject var viewModel: HomeViewModel
     @Environment(\.scenePhase) private var scenePhase
 
+    #if DEBUG
+    @State private var debugURLText = ""
+    #endif
+
     var body: some View {
         ZStack {
             // Background: warm off-white with vermillion gradient from top
@@ -36,6 +40,15 @@ struct HomeView: View {
                     .padding(.top, 8)
 
                 Spacer()
+
+                #if DEBUG
+                // TEMPORARY: Manual URL input for Simulator testing.
+                // Pasteboard sync is broken — this bypasses ClipboardMonitor.
+                // Remove before TestFlight / App Store builds.
+                debugURLInput
+                    .padding(.horizontal, 32)
+                    .padding(.bottom, 12)
+                #endif
 
                 // CTA button + label
                 ctaSection
@@ -144,6 +157,42 @@ struct HomeView: View {
             }
         }
     }
+
+    // MARK: - Debug URL Input
+
+    #if DEBUG
+    private var debugURLInput: some View {
+        HStack(spacing: 8) {
+            TextField("Paste URL here", text: $debugURLText)
+                .font(.system(size: 12, design: .monospaced))
+                .textFieldStyle(.roundedBorder)
+                .autocorrectionDisabled()
+                .textInputAutocapitalization(.never)
+                .keyboardType(.URL)
+
+            Button {
+                let trimmed = debugURLText.trimmingCharacters(in: .whitespacesAndNewlines)
+                guard let url = URL(string: trimmed),
+                      (url.scheme == "http" || url.scheme == "https") else {
+                    print("DEBUG: invalid URL — \(debugURLText)")
+                    return
+                }
+                let platform = SupportedPlatform.platform(forURL: url)?.displayName ?? "Unknown"
+                print("DEBUG: injecting URL into pipeline — \(url.absoluteString) (\(platform))")
+                viewModel.importState = .urlDetected(url: url, platform: platform)
+                viewModel.startImport()
+            } label: {
+                Text("Import")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(Color.gray)
+                    .clipShape(RoundedRectangle(cornerRadius: 6))
+            }
+        }
+    }
+    #endif
 
     // MARK: - Helpers
 
