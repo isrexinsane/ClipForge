@@ -9,6 +9,7 @@
 //  See Design_Decisions §2.1.
 //
 //  STORY-023: Added TabView with Home and Media Library pages.
+//  STORY-9.1: Onboarding fullScreenCover on first launch.
 //
 
 import SwiftUI
@@ -18,6 +19,8 @@ struct ContentView: View {
     @StateObject private var homeViewModel = HomeViewModel()
     @StateObject private var historyStore = GIFHistoryStore.shared
     @State private var selectedPage = 0
+    @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
+    @State private var showOnboarding = false
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -40,6 +43,14 @@ struct ContentView: View {
                 }
             }
             .padding(.bottom, 8)
+        }
+        .onAppear {
+            if !hasCompletedOnboarding {
+                showOnboarding = true
+            }
+        }
+        .fullScreenCover(isPresented: $showOnboarding) {
+            OnboardingView()
         }
     }
 }
