@@ -11,6 +11,17 @@
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
 	</array>
+	<key>UIAppFonts</key>
+	<array>
+		<string>JetBrainsMono-Regular.ttf</string>
+		<string>JetBrainsMono-Medium.ttf</string>
+		<string>JetBrainsMono-Bold.ttf</string>
+		<string>Inter-VariableFont_opsz,wght.ttf</string>
+	</array>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>ClipForge saves your GIFs to your photo library so you can share them.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>ClipForge accesses your photo library to display your saved GIFs.</string>
 	<key>UISupportedInterfaceOrientations~ipad</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
