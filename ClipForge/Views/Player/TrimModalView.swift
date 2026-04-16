@@ -38,6 +38,7 @@ struct TrimModalView: View {
 
     // Share sheet presentation
     @State private var showShareSheet = false
+    @State private var shareFileURL: URL?
 
     // Freemium gate prompt
     @State private var showFreemiumGate = false
@@ -91,9 +92,15 @@ struct TrimModalView: View {
             guard newDuration > 0, trimViewModel == nil else { return }
             initializeTrimInterface(duration: newDuration)
         }
-        .sheet(isPresented: $showShareSheet) {
-            if case .success(let gifData, _, _) = exportViewModel.exportState {
-                ShareSheet(activityItems: [gifData])
+        .sheet(isPresented: $showShareSheet, onDismiss: {
+            // Clean up temp file after share sheet closes
+            if let url = shareFileURL {
+                try? FileManager.default.removeItem(at: url)
+                shareFileURL = nil
+            }
+        }) {
+            if let url = shareFileURL {
+                ShareSheet(activityItems: [url])
             }
         }
     }
@@ -353,7 +360,22 @@ struct TrimModalView: View {
             HStack(spacing: DesignTokens.paddingStandard) {
                 // Share button — vermillion fill
                 Button {
-                    showShareSheet = true
+                    if case .success(let gifData, _, _) = exportViewModel.exportState {
+                        let tempURL = FileManager.default.temporaryDirectory
+                            .appendingPathComponent("ClipForge-\(UUID().uuidString).gif")
+                        do {
+                            try gifData.write(to: tempURL)
+                            shareFileURL = tempURL
+                            showShareSheet = true
+                            #if DEBUG
+                            print("DEBUG: wrote GIF to temp file for share: \(tempURL.lastPathComponent)")
+                            #endif
+                        } catch {
+                            #if DEBUG
+                            print("DEBUG: failed to write GIF temp file: \(error)")
+                            #endif
+                        }
+                    }
                 } label: {
                     Text("SHARE")
                         .font(DesignTokens.labelFont(size: 16))

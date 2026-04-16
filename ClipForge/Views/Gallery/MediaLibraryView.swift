@@ -27,6 +27,7 @@ struct MediaLibraryView: View {
     @State private var showShareSheet = false
     @State private var showShareError = false
     @State private var isLoadingShare = false
+    @State private var shareFileURL: URL?
 
     var body: some View {
         // Background gradient handled by ContentView — this view is transparent.
@@ -46,7 +47,13 @@ struct MediaLibraryView: View {
                 Spacer()
                     .frame(height: DesignTokens.paddingXLarge + DesignTokens.paddingSmall)
             }
-        .sheet(isPresented: $showShareSheet) {
+        .sheet(isPresented: $showShareSheet, onDismiss: {
+            // Clean up temp file after share sheet closes
+            if let url = shareFileURL {
+                try? FileManager.default.removeItem(at: url)
+                shareFileURL = nil
+            }
+        }) {
             ShareSheet(activityItems: shareItems)
         }
         .alert("GIF Unavailable", isPresented: $showShareError) {
@@ -183,8 +190,24 @@ struct MediaLibraryView: View {
                 Task { @MainActor in
                     isLoadingShare = false
                     if error == nil, !gifData.isEmpty {
-                        shareItems = [gifData]
-                        showShareSheet = true
+                        // Write to temp file with .gif extension so receiving
+                        // apps recognize animated GIF (raw Data pastes as still image)
+                        let tempURL = FileManager.default.temporaryDirectory
+                            .appendingPathComponent("ClipForge-\(UUID().uuidString).gif")
+                        do {
+                            try gifData.write(to: tempURL)
+                            shareFileURL = tempURL
+                            shareItems = [tempURL]
+                            showShareSheet = true
+                            #if DEBUG
+                            print("DEBUG: wrote GIF to temp file for share: \(tempURL.lastPathComponent)")
+                            #endif
+                        } catch {
+                            #if DEBUG
+                            print("DEBUG: failed to write GIF temp file: \(error)")
+                            #endif
+                            showShareError = true
+                        }
                     } else {
                         showShareError = true
                     }
