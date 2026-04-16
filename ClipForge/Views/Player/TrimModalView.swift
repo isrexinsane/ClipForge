@@ -55,6 +55,12 @@ struct TrimModalView: View {
     }
 
     var body: some View {
+        trimModalContent
+    }
+
+    /// The full trim modal — extracted to keep `body` minimal and
+    /// avoid SwiftUI type-checker cascades.
+    private var trimModalContent: some View {
         ZStack {
             // Pure black background, edge-to-edge
             Color.black.ignoresSafeArea()
@@ -62,8 +68,8 @@ struct TrimModalView: View {
             VStack(spacing: 0) {
                 // Top bar
                 topBar
-                    .padding(.horizontal, 16)
-                    .padding(.top, 8)
+                    .padding(.horizontal, DesignTokens.paddingStandard)
+                    .padding(.top, DesignTokens.paddingXSmall)
 
                 Spacer()
 
@@ -74,8 +80,8 @@ struct TrimModalView: View {
 
                 // Bottom area: depends on export state
                 bottomSection
-                    .padding(.horizontal, 16)
-                    .padding(.bottom, 16)
+                    .padding(.horizontal, DesignTokens.paddingStandard)
+                    .padding(.bottom, DesignTokens.paddingStandard)
             }
 
         }
@@ -121,16 +127,24 @@ struct TrimModalView: View {
 
             Spacer()
 
-            // Cancel / Done button
+            // Cancel / Done button — Liquid Glass Text pill
             Button {
                 handleDismiss()
             } label: {
                 Text(dismissButtonTitle)
-                    .font(CFFont.inter(size: 16, weight: .medium))
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 8)
-                    .background(.ultraThinMaterial, in: Capsule())
+                    .font(.system(size: 17, weight: .medium))
+                    .foregroundStyle(DesignTokens.glassButtonText)
+                    .padding(.horizontal, DesignTokens.paddingStandard)
+                    .padding(.vertical, DesignTokens.paddingXSmall)
+                    .background {
+                        Capsule()
+                            .fill(DesignTokens.glassButtonBase)
+                        Capsule()
+                            .fill(DesignTokens.glassButtonBurn.opacity(0.3))
+                        Capsule()
+                            .fill(DesignTokens.glassButtonDarken.opacity(0.2))
+                    }
+                    .clipShape(Capsule())
             }
         }
     }
@@ -160,7 +174,7 @@ struct TrimModalView: View {
             // GIF preview — looping animated image
             GIFPreviewView(gifData: gifData)
                 .aspectRatio(contentMode: .fit)
-                .padding(.horizontal, 16)
+                .padding(.horizontal, DesignTokens.paddingStandard)
         } else {
             // Live video player
             VideoPlayer(player: playerManager.player)
@@ -197,21 +211,21 @@ struct TrimModalView: View {
     @ViewBuilder
     private var trimSection: some View {
         if let trimVM = trimViewModel {
-            VStack(spacing: 12) {
+            VStack(spacing: DesignTokens.paddingSmall) {
                 // Error message with retry
                 if case .error(let message) = exportViewModel.exportState {
                     VStack(spacing: 8) {
                         Text(message)
-                            .font(CFFont.inter(size: 14))
-                            .foregroundStyle(Color.cfError)
+                            .font(DesignTokens.bodyFont(size: 14))
+                            .foregroundStyle(DesignTokens.error)
                             .multilineTextAlignment(.center)
 
                         Button {
                             exportViewModel.resetToIdle()
                         } label: {
                             Text("Try Again")
-                                .font(CFFont.jetBrainsMono(size: 14))
-                                .foregroundStyle(Color.cfAccent)
+                                .font(DesignTokens.labelFont(size: 14))
+                                .foregroundStyle(DesignTokens.vermillion)
                         }
                     }
                     .padding(.bottom, 4)
@@ -239,7 +253,7 @@ struct TrimModalView: View {
     // MARK: - Encoding Progress (STORY-020)
 
     private func encodingSection(progress: Double) -> some View {
-        VStack(spacing: 16) {
+        VStack(spacing: DesignTokens.paddingStandard) {
             // Trim bar remains visible during encoding
             if let trimVM = trimViewModel {
                 TrimBarView(
@@ -264,27 +278,27 @@ struct TrimModalView: View {
                 // Vermillion progress stroke
                 Circle()
                     .trim(from: 0, to: progress)
-                    .stroke(Color.cfAccent, style: StrokeStyle(lineWidth: 4, lineCap: .round))
+                    .stroke(DesignTokens.vermillion, style: StrokeStyle(lineWidth: 4, lineCap: .round))
                     .frame(width: 80, height: 80)
                     .rotationEffect(.degrees(-90))
                     .animation(.linear(duration: 0.2), value: progress)
 
                 // Percentage text
                 Text("\(Int(progress * 100))%")
-                    .font(CFFont.jetBrainsMono(size: 18, weight: .bold))
+                    .font(DesignTokens.headingFont(size: 18))
                     .foregroundStyle(.white)
             }
 
             Text("Creating your GIF...")
-                .font(CFFont.jetBrainsMono(size: 14))
-                .foregroundStyle(Color.cfTextSecondary)
+                .font(DesignTokens.labelFont(size: 14))
+                .foregroundStyle(DesignTokens.textSecondary)
 
             // Cancel encoding
             Button {
                 exportViewModel.cancelExport()
             } label: {
                 Text("Cancel")
-                    .font(CFFont.jetBrainsMono(size: 14))
+                    .font(DesignTokens.labelFont(size: 14))
                     .foregroundStyle(.white.opacity(0.6))
             }
         }
@@ -293,7 +307,7 @@ struct TrimModalView: View {
     // MARK: - Saving State
 
     private var savingSection: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: DesignTokens.paddingStandard) {
             ZStack {
                 Circle()
                     .stroke(Color.white.opacity(0.2), lineWidth: 4)
@@ -301,54 +315,54 @@ struct TrimModalView: View {
 
                 Circle()
                     .trim(from: 0, to: 1.0)
-                    .stroke(Color.cfAccent, style: StrokeStyle(lineWidth: 4, lineCap: .round))
+                    .stroke(DesignTokens.vermillion, style: StrokeStyle(lineWidth: 4, lineCap: .round))
                     .frame(width: 80, height: 80)
                     .rotationEffect(.degrees(-90))
 
                 Text("100%")
-                    .font(CFFont.jetBrainsMono(size: 18, weight: .bold))
+                    .font(DesignTokens.headingFont(size: 18))
                     .foregroundStyle(.white)
             }
 
             Text("Saving...")
-                .font(CFFont.jetBrainsMono(size: 14))
-                .foregroundStyle(Color.cfTextSecondary)
+                .font(DesignTokens.labelFont(size: 14))
+                .foregroundStyle(DesignTokens.textSecondary)
         }
     }
 
     // MARK: - Success State (STORY-022)
 
     private var successSection: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: DesignTokens.paddingStandard) {
             // File info line
             if let info = exportViewModel.fileInfoText {
                 Text(info)
-                    .font(CFFont.jetBrainsMono(size: 14))
+                    .font(DesignTokens.labelFont(size: 14))
                     .foregroundStyle(.white)
             }
 
             // Oversize warning
             if let warning = exportViewModel.oversizeWarning {
                 Text(warning)
-                    .font(CFFont.jetBrainsMono(size: 13))
-                    .foregroundStyle(Color.cfTextSecondary)
+                    .font(DesignTokens.labelFont(size: 13))
+                    .foregroundStyle(DesignTokens.textSecondary)
                     .multilineTextAlignment(.center)
             }
 
             // Action buttons
-            HStack(spacing: 16) {
+            HStack(spacing: DesignTokens.paddingStandard) {
                 // Share button — vermillion fill
                 Button {
                     showShareSheet = true
                 } label: {
                     Text("SHARE")
-                        .font(CFFont.jetBrainsMono(size: 16))
+                        .font(DesignTokens.labelFont(size: 16))
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
                         .frame(height: 48)
                         .background(
-                            RoundedRectangle(cornerRadius: 24)
-                                .fill(Color.cfAccent)
+                            RoundedRectangle(cornerRadius: DesignTokens.cornerRadiusButton)
+                                .fill(DesignTokens.vermillion)
                         )
                 }
 
@@ -357,12 +371,12 @@ struct TrimModalView: View {
                     handleDismiss()
                 } label: {
                     Text("DONE")
-                        .font(CFFont.jetBrainsMono(size: 16))
+                        .font(DesignTokens.labelFont(size: 16))
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
                         .frame(height: 48)
                         .background(
-                            RoundedRectangle(cornerRadius: 24)
+                            RoundedRectangle(cornerRadius: DesignTokens.cornerRadiusButton)
                                 .stroke(.white, lineWidth: 1)
                         )
                 }
@@ -371,8 +385,8 @@ struct TrimModalView: View {
             // Free tier counter — hidden for premium users (STORY-7.4)
             if !gatekeeper.isPremium {
                 Text("\(gatekeeper.remainingExports) of \(gatekeeper.dailyLimit) free GIFs remaining today")
-                    .font(CFFont.jetBrainsMono(size: 13))
-                    .foregroundStyle(Color.cfTextSecondary)
+                    .font(DesignTokens.labelFont(size: 13))
+                    .foregroundStyle(DesignTokens.textSecondary)
             }
         }
     }
@@ -382,13 +396,13 @@ struct TrimModalView: View {
     private func durationReadout(trimVM: TrimViewModel) -> some View {
         VStack(spacing: 4) {
             Text(trimVM.durationText)
-                .font(CFFont.jetBrainsMono(size: 32, weight: .bold))
+                .font(DesignTokens.headingFont(size: 32))
                 .foregroundStyle(durationTextColor(trimVM.durationColor))
 
             if trimVM.durationColor == .danger {
                 Text("Long clips produce large files")
-                    .font(CFFont.jetBrainsMono(size: 14))
-                    .foregroundStyle(Color.cfTextSecondary)
+                    .font(DesignTokens.labelFont(size: 14))
+                    .foregroundStyle(DesignTokens.textSecondary)
                     .transition(.opacity)
                     .animation(.easeInOut(duration: 0.3), value: trimVM.durationColor)
             }
@@ -406,7 +420,7 @@ struct TrimModalView: View {
     // MARK: - CREATE Button (STORY-018 / STORY-020 / STORY-7.3)
 
     private func createButton(trimVM: TrimViewModel) -> some View {
-        VStack(spacing: 12) {
+        VStack(spacing: DesignTokens.paddingSmall) {
             if showFreemiumGate {
                 // Upgrade prompt — shown when daily limit reached
                 freemiumGatePrompt
@@ -427,14 +441,19 @@ struct TrimModalView: View {
                     }
                 } label: {
                     Text("CREATE")
-                        .font(CFFont.jetBrainsMono(size: 16))
-                        .foregroundStyle(.white)
+                        .font(.system(size: 17, weight: .medium))
+                        .foregroundStyle(DesignTokens.glassButtonText)
                         .frame(maxWidth: .infinity)
-                        .frame(height: 52)
-                        .background(
-                            RoundedRectangle(cornerRadius: 26)
-                                .fill(Color.cfAccent)
-                        )
+                        .frame(height: 46)
+                        .background {
+                            RoundedRectangle(cornerRadius: 1000)
+                                .fill(DesignTokens.glassButtonBase)
+                            RoundedRectangle(cornerRadius: 1000)
+                                .fill(DesignTokens.glassButtonBurn.opacity(0.3))
+                            RoundedRectangle(cornerRadius: 1000)
+                                .fill(DesignTokens.glassButtonDarken.opacity(0.2))
+                        }
+                        .clipShape(RoundedRectangle(cornerRadius: 1000))
                 }
                 .disabled(!trimVM.isNextEnabled)
                 .opacity(trimVM.isNextEnabled ? 1.0 : 0.4)
@@ -445,37 +464,41 @@ struct TrimModalView: View {
     // MARK: - Freemium Gate Prompt (STORY-7.3)
 
     private var freemiumGatePrompt: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: DesignTokens.paddingSmall) {
             Text("You've used your free GIF for today")
-                .font(CFFont.jetBrainsMono(size: 16, weight: .bold))
+                .font(DesignTokens.headingFont(size: 16))
                 .foregroundStyle(.white)
                 .multilineTextAlignment(.center)
 
             Text("Upgrade to ClipForge Premium for unlimited GIFs")
-                .font(CFFont.inter(size: 14))
-                .foregroundStyle(Color.cfTextSecondary)
+                .font(DesignTokens.bodyFont(size: 14))
+                .foregroundStyle(DesignTokens.textSecondary)
                 .multilineTextAlignment(.center)
 
             Button {
-                // TODO: present subscription view (wired in a later story)
-                print("TODO: present subscription")
+                SubscriptionRouter.shared.showSubscription = true
             } label: {
                 Text("Upgrade — $9.99/year")
-                    .font(CFFont.jetBrainsMono(size: 16))
-                    .foregroundStyle(.white)
+                    .font(.system(size: 17, weight: .medium))
+                    .foregroundStyle(DesignTokens.glassButtonText)
                     .frame(maxWidth: .infinity)
-                    .frame(height: 52)
-                    .background(
-                        RoundedRectangle(cornerRadius: 26)
-                            .fill(Color.cfAccent)
-                    )
+                    .frame(height: 46)
+                    .background {
+                        RoundedRectangle(cornerRadius: 1000)
+                            .fill(DesignTokens.glassButtonBase)
+                        RoundedRectangle(cornerRadius: 1000)
+                            .fill(DesignTokens.glassButtonBurn.opacity(0.3))
+                        RoundedRectangle(cornerRadius: 1000)
+                            .fill(DesignTokens.glassButtonDarken.opacity(0.2))
+                    }
+                    .clipShape(RoundedRectangle(cornerRadius: 1000))
             }
 
             Button {
                 showFreemiumGate = false
             } label: {
                 Text("Maybe Later")
-                    .font(CFFont.jetBrainsMono(size: 14))
+                    .font(DesignTokens.labelFont(size: 14))
                     .foregroundStyle(.white.opacity(0.6))
             }
         }

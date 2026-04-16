@@ -2,9 +2,13 @@
 //  HomeView.swift
 //  ClipForge
 //
-//  The app's landing screen. Displays the CTA button with progress
-//  ring, platform list, and error messaging. Clipboard detection
-//  drives button state automatically.
+//  The app's landing screen. Full-screen warm off-white base with
+//  a bold vermillion gradient (100% at top → 0% at 52.25% down).
+//  159pt glass bubble CTA, "CLIPFORGE" in warm white, "+" menu button.
+//
+//  Figma layout: title top-left, + button top-right, glass CTA centered,
+//  "CREATE GIF" label 20px bold black, platform list 14px bold muted,
+//  page dots at bottom (rendered by ContentView).
 //
 //  STORY-012: HomeView — CTA Button with Progress Ring
 //
@@ -25,53 +29,39 @@ struct HomeView: View {
     #endif
 
     var body: some View {
-        ZStack {
-            // Background: warm off-white with vermillion gradient from top
-            Color.cfBackground
-                .ignoresSafeArea()
-
-            LinearGradient(
-                colors: [Color.cfAccent.opacity(0.15), Color.clear],
-                startPoint: .top,
-                endPoint: .center
-            )
-            .ignoresSafeArea()
-
-            VStack(spacing: 0) {
-                // Top bar
+        // Background gradient handled by ContentView — this view is transparent.
+        VStack(spacing: 0) {
+                // Top bar: title + menu
                 topBar
-                    .padding(.horizontal, 20)
-                    .padding(.top, 8)
+                    .padding(.horizontal, DesignTokens.paddingStandard)
+                    .padding(.top, 31)
 
                 Spacer()
 
-                // CTA button + label
+                // CTA section: glass bubble + label + platform list
                 ctaSection
 
                 Spacer()
 
-                #if DEBUG
-                // TEMPORARY: Manual URL input for Simulator testing.
-                // Pasteboard sync is broken — bypasses ClipboardMonitor.
-                // Remove before TestFlight / App Store builds.
-                debugURLInput
-                    .padding(.horizontal, 24)
-                    .padding(.bottom, 8)
-                #endif
-
-                // Platform list
-                platformList
-                    .padding(.bottom, 8)
-
                 // Error / YouTube message area
                 errorArea
-                    .padding(.horizontal, 32)
-                    .padding(.bottom, 16)
+                    .padding(.horizontal, DesignTokens.paddingXLarge)
+
+                // Free GIF counter — subtle, above page dots
+                freeGIFCounter
+                    .padding(.top, DesignTokens.paddingSmall)
+
+                #if DEBUG
+                debugURLInput
+                    .padding(.horizontal, DesignTokens.paddingStandard)
+                    .padding(.top, DesignTokens.paddingXSmall)
+                #endif
+
+                // Reserve space for page dots rendered by ContentView
+                Spacer()
+                    .frame(height: DesignTokens.paddingXLarge + DesignTokens.paddingSmall)
             }
-        }
         .onAppear {
-            // Initial clipboard check on first launch — scenePhase
-            // starts as .active so onChange won't fire until a transition.
             viewModel.clipboardMonitor.checkClipboard()
         }
         .onChange(of: scenePhase) { _, newPhase in
@@ -96,13 +86,14 @@ struct HomeView: View {
 
     private var topBar: some View {
         HStack {
+            // Title — JetBrains Mono Bold 24px, warm white
             Text("CLIPFORGE")
-                .font(CFFont.jetBrainsMono(size: 18))
-                .foregroundStyle(Color.cfTextPrimary)
+                .font(DesignTokens.headingFont(size: DesignTokens.titleSize))
+                .foregroundStyle(DesignTokens.textOnGradient)
 
             Spacer()
 
-            // Menu button (STORY-8.4)
+            // "+" menu button — 39.5pt glass circle
             Menu {
                 Button("Restore Purchase") {
                     Task {
@@ -123,9 +114,24 @@ struct HomeView: View {
                 }
                 Button("About ClipForge") { }
             } label: {
-                Image(systemName: "ellipsis.circle")
-                    .font(.title3)
-                    .foregroundStyle(Color.cfTextSecondary)
+                ZStack {
+                    // Glass circle backdrop
+                    Circle()
+                        .fill(.ultraThinMaterial)
+                        .frame(width: DesignTokens.menuButtonSize, height: DesignTokens.menuButtonSize)
+
+                    Circle()
+                        .fill(DesignTokens.glassBackground)
+                        .frame(width: DesignTokens.menuButtonSize, height: DesignTokens.menuButtonSize)
+
+                    Circle()
+                        .stroke(DesignTokens.glassBorder, lineWidth: 1)
+                        .frame(width: DesignTokens.menuButtonSize, height: DesignTokens.menuButtonSize)
+
+                    Image(systemName: "plus")
+                        .font(.system(size: 18, weight: .medium))
+                        .foregroundStyle(.white)
+                }
             }
         }
     }
@@ -133,8 +139,8 @@ struct HomeView: View {
     // MARK: - CTA Section
 
     private var ctaSection: some View {
-        VStack(spacing: 16) {
-            // Pulse animation for urlDetected state
+        VStack(spacing: DesignTokens.paddingLarge) {
+            // Glass bubble CTA
             CTAButtonView(
                 importState: viewModel.importState,
                 onTap: { viewModel.startImport() }
@@ -142,17 +148,27 @@ struct HomeView: View {
             .animation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true),
                         value: isURLDetected)
 
+            // "CREATE GIF" label — 20px bold black
             CTALabelView(importState: viewModel.importState)
                 .animation(.easeInOut(duration: 0.2), value: viewModel.importState)
+
+            // Platform list — Inter Bold 14px, muted warm
+            Text("X · Instagram · Reddit · TikTok · Twitch")
+                .font(DesignTokens.bodyFontBold(size: DesignTokens.platformListSize))
+                .foregroundStyle(DesignTokens.mutedWarm)
         }
     }
 
-    // MARK: - Platform List
+    // MARK: - Free GIF Counter
 
-    private var platformList: some View {
-        Text("X · Instagram · Reddit · TikTok · Twitch")
-            .font(CFFont.inter(size: 13))
-            .foregroundStyle(Color.cfTextSecondary)
+    private var freeGIFCounter: some View {
+        Group {
+            if !FreemiumGatekeeper.shared.isPremium {
+                Text("\(FreemiumGatekeeper.shared.remainingExports) of \(FreemiumGatekeeper.shared.dailyLimit) free GIFs remaining today")
+                    .font(DesignTokens.bodyFont(size: 12))
+                    .foregroundStyle(DesignTokens.mutedWarm)
+            }
+        }
     }
 
     // MARK: - Error Area
@@ -161,8 +177,8 @@ struct HomeView: View {
     private var errorArea: some View {
         if let message = viewModel.errorMessage {
             Text(message)
-                .font(CFFont.inter(size: 14))
-                .foregroundStyle(Color.cfTextSecondary)
+                .font(DesignTokens.bodyFont(size: 14))
+                .foregroundStyle(DesignTokens.mutedWarm)
                 .multilineTextAlignment(.center)
                 .transition(.opacity.combined(with: .move(edge: .bottom)))
                 .animation(.easeInOut(duration: 0.3), value: viewModel.importState)
@@ -172,10 +188,10 @@ struct HomeView: View {
                     viewModel.retry()
                 } label: {
                     Text("Try Again")
-                        .font(CFFont.jetBrainsMono(size: 14))
-                        .foregroundStyle(Color.cfAccent)
+                        .font(DesignTokens.labelFont(size: 14))
+                        .foregroundStyle(DesignTokens.vermillion)
                 }
-                .padding(.top, 8)
+                .padding(.top, DesignTokens.paddingXSmall)
             }
         }
     }
@@ -186,11 +202,11 @@ struct HomeView: View {
     private var restoreFeedbackToast: some View {
         if showRestoreFeedback, let message = restoreFeedback {
             Text(message)
-                .font(CFFont.jetBrainsMono(size: 14))
+                .font(DesignTokens.labelFont(size: 14))
                 .foregroundStyle(.white)
-                .padding(.horizontal, 20)
-                .padding(.vertical, 12)
-                .background(Capsule().fill(Color.cfDarkBase))
+                .padding(.horizontal, DesignTokens.paddingLarge)
+                .padding(.vertical, DesignTokens.paddingSmall)
+                .background(Capsule().fill(DesignTokens.darkSurface))
                 .padding(.bottom, 60)
                 .transition(.opacity.combined(with: .move(edge: .bottom)))
                 .animation(.easeInOut(duration: 0.3), value: showRestoreFeedback)
@@ -201,14 +217,14 @@ struct HomeView: View {
 
     #if DEBUG
     private var debugURLInput: some View {
-        VStack(spacing: 6) {
-            Text("DEBUG: Simulator clipboard workaround")
-                .font(.system(size: 10))
-                .foregroundStyle(.gray)
+        VStack(spacing: 4) {
+            Text("DEBUG: Simulator paste workaround")
+                .font(.system(size: 9))
+                .foregroundStyle(DesignTokens.mutedWarm.opacity(0.6))
 
-            HStack(spacing: 8) {
-                TextField("Paste URL here for testing", text: $debugURLText)
-                    .font(.system(size: 12, design: .monospaced))
+            HStack(spacing: 6) {
+                TextField("Paste URL here", text: $debugURLText)
+                    .font(.system(size: 11, design: .monospaced))
                     .foregroundStyle(.primary)
                     .textFieldStyle(.roundedBorder)
                     .autocorrectionDisabled()
@@ -222,27 +238,25 @@ struct HomeView: View {
                         print("DEBUG: invalid URL — \"\(debugURLText)\"")
                         return
                     }
-
-                    // Replicate the production handoff:
-                    // ClipboardMonitor sets detectedURL/detectedPlatform →
-                    // Combine sink sets importState → user taps CTA → startImport().
-                    // We set importState directly (ClipboardMonitor props are private(set))
-                    // then call startImport() — same performImport() code path.
                     let platform = SupportedPlatform.platform(forURL: url)?.displayName ?? "Unknown"
-                    print("DEBUG: injecting URL into pipeline — \(url.absoluteString) (\(platform))")
+                    print("DEBUG: injecting URL — \(url.absoluteString) (\(platform))")
                     viewModel.importState = .urlDetected(url: url, platform: platform)
                     viewModel.startImport()
                 } label: {
-                    Text("Test Import")
-                        .font(.system(size: 11, weight: .medium))
+                    Text("Go")
+                        .font(.system(size: 10, weight: .medium))
                         .foregroundStyle(.white)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 5)
-                        .background(Color.gray.opacity(0.7))
-                        .clipShape(RoundedRectangle(cornerRadius: 5))
+                        .padding(.horizontal, DesignTokens.paddingXSmall)
+                        .padding(.vertical, 4)
+                        .background(DesignTokens.mutedWarm.opacity(0.5), in: Capsule())
                 }
             }
         }
+        .padding(DesignTokens.paddingXSmall)
+        .background(
+            RoundedRectangle(cornerRadius: DesignTokens.paddingXSmall)
+                .fill(DesignTokens.surface.opacity(0.4))
+        )
     }
     #endif
 

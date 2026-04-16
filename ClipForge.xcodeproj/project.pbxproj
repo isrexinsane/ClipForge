@@ -81,6 +81,10 @@
 		CD5C94932F8C8AF6009A5793 /* TrimViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD5C94902F8C8AF6009A5793 /* TrimViewModel.swift */; };
 		CD5C94962F9032F1009A5793 /* SubscriptionManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD5C94952F9032F1009A5793 /* SubscriptionManager.swift */; };
 		CD5C94972F9032F1009A5793 /* FreemiumGatekeeper.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD5C94942F9032F1009A5793 /* FreemiumGatekeeper.swift */; };
+		CD5C94992F904A8C009A5793 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD5C94982F904A8C009A5793 /* OnboardingView.swift */; };
+		CD5C949B2F905A33009A5793 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD5C949A2F905A33009A5793 /* RootView.swift */; };
+		CD5C949D2F905B39009A5793 /* SubscriptionRouter.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD5C949C2F905B39009A5793 /* SubscriptionRouter.swift */; };
+		CD5C949F2F905F65009A5793 /* UpgradeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD5C949E2F905F65009A5793 /* UpgradeView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -160,6 +164,10 @@
 		CD5C94902F8C8AF6009A5793 /* TrimViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrimViewModel.swift; sourceTree = "<group>"; };
 		CD5C94942F9032F1009A5793 /* FreemiumGatekeeper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FreemiumGatekeeper.swift; sourceTree = "<group>"; };
 		CD5C94952F9032F1009A5793 /* SubscriptionManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubscriptionManager.swift; sourceTree = "<group>"; };
+		CD5C94982F904A8C009A5793 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
+		CD5C949A2F905A33009A5793 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		CD5C949C2F905B39009A5793 /* SubscriptionRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubscriptionRouter.swift; sourceTree = "<group>"; };
+		CD5C949E2F905F65009A5793 /* UpgradeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpgradeView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -218,6 +226,9 @@
 		AE000004 /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				CD5C949E2F905F65009A5793 /* UpgradeView.swift */,
+				CD5C949A2F905A33009A5793 /* RootView.swift */,
+				CD5C94982F904A8C009A5793 /* OnboardingView.swift */,
 				CD5C948A2F8C8273009A5793 /* Gallery */,
 				AB000002 /* ContentView.swift */,
 				AE000010 /* Home */,
@@ -242,6 +253,7 @@
 		AE000006 /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				CD5C949C2F905B39009A5793 /* SubscriptionRouter.swift */,
 				CD5C94942F9032F1009A5793 /* FreemiumGatekeeper.swift */,
 				CD5C94952F9032F1009A5793 /* SubscriptionManager.swift */,
 				CD5C94702F8C81C4009A5793 /* APIService.swift */,
@@ -470,7 +482,9 @@
 				AA000002 /* ContentView.swift in Sources */,
 				AA000005 /* ViewModels.swift in Sources */,
 				AA000006 /* Services.swift in Sources */,
+				CD5C949F2F905F65009A5793 /* UpgradeView.swift in Sources */,
 				CD5C94782F8C81C4009A5793 /* FilmstripGenerator.swift in Sources */,
+				CD5C949D2F905B39009A5793 /* SubscriptionRouter.swift in Sources */,
 				CD5C94792F8C81C4009A5793 /* GIFHistoryStore.swift in Sources */,
 				CD5C948D2F8C8A49009A5793 /* ImportState.swift in Sources */,
 				CD5C947A2F8C81C4009A5793 /* Configuration.swift in Sources */,
@@ -487,6 +501,8 @@
 				AA000011 /* VideoMetadata.swift in Sources */,
 				AA000012 /* ExtractionRequest.swift in Sources */,
 				AA000013 /* ExtractionResponse.swift in Sources */,
+				CD5C949B2F905A33009A5793 /* RootView.swift in Sources */,
+				CD5C94992F904A8C009A5793 /* OnboardingView.swift in Sources */,
 				AA000014 /* QualityPreset.swift in Sources */,
 				CD5C94832F8C81F8009A5793 /* CTAButtonView.swift in Sources */,
 				AA000015 /* GIFConfiguration.swift in Sources */,

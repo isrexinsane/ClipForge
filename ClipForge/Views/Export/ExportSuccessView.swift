@@ -13,32 +13,40 @@ struct ExportSuccessView: View {
     @Binding var navigationPath: NavigationPath
 
     var body: some View {
-        VStack(spacing: 24) {
+        VStack(spacing: DesignTokens.paddingLarge) {
             Spacer()
 
             Image(systemName: "checkmark.circle.fill")
                 .font(.system(size: 64))
-                .foregroundStyle(.green)
+                .foregroundStyle(DesignTokens.vermillion)
 
-            Text("Export Complete!")
-                .font(.title)
-                .fontWeight(.semibold)
+            Text("GIF Created!")
+                .font(DesignTokens.headingFont(size: 28))
+                .foregroundStyle(DesignTokens.textPrimary)
 
             Text("Your GIF has been saved.")
-                .foregroundStyle(.secondary)
+                .font(DesignTokens.bodyFont(size: 16))
+                .foregroundStyle(DesignTokens.textSecondary)
 
             Button {
                 // Pop to root by clearing the entire navigation path.
                 navigationPath = NavigationPath()
             } label: {
                 Text("Done")
+                    .font(DesignTokens.labelFont(size: 16))
+                    .foregroundStyle(.white)
                     .frame(maxWidth: .infinity)
+                    .frame(height: 48)
+                    .background(
+                        RoundedRectangle(cornerRadius: DesignTokens.cornerRadiusButton)
+                            .fill(DesignTokens.vermillion)
+                    )
             }
-            .buttonStyle(.borderedProminent)
-            .padding(.horizontal, 32)
+            .padding(.horizontal, DesignTokens.paddingXLarge)
 
             Spacer()
         }
+        .background(DesignTokens.background.ignoresSafeArea())
         .navigationTitle("Complete")
         .navigationBarTitleDisplayMode(.inline)
     }

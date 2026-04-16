@@ -31,7 +31,7 @@ struct OnboardingView: View {
 
     var body: some View {
         ZStack(alignment: .topTrailing) {
-            Color.cfBackground
+            DesignTokens.background
                 .ignoresSafeArea()
 
             VStack(spacing: 0) {
@@ -76,11 +76,11 @@ struct OnboardingView: View {
 
     /// CAVA-style page indicator dots.
     private var pageDots: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: DesignTokens.paddingXSmall) {
             ForEach(0..<pages.count, id: \.self) { index in
                 Circle()
-                    .fill(index == currentPage ? Color.cfAccent : Color.cfTextSecondary.opacity(0.4))
-                    .frame(width: 8, height: 8)
+                    .fill(index == currentPage ? DesignTokens.vermillion : DesignTokens.textSecondary.opacity(0.4))
+                    .frame(width: DesignTokens.paddingXSmall, height: DesignTokens.paddingXSmall)
                     .animation(.easeInOut(duration: 0.2), value: currentPage)
             }
         }
@@ -92,11 +92,11 @@ struct OnboardingView: View {
             completeOnboarding()
         } label: {
             Text("Skip")
-                .font(CFFont.jetBrainsMono(size: 15, weight: .medium))
-                .foregroundStyle(Color.cfTextSecondary)
+                .font(DesignTokens.labelFont(size: 15))
+                .foregroundStyle(DesignTokens.textSecondary)
         }
-        .padding(.top, 16)
-        .padding(.trailing, 24)
+        .padding(.top, DesignTokens.paddingStandard)
+        .padding(.trailing, DesignTokens.paddingLarge)
     }
 
     /// "Get Started" button — shown only on the final page.
@@ -105,14 +105,14 @@ struct OnboardingView: View {
             completeOnboarding()
         } label: {
             Text("Get Started")
-                .font(CFFont.jetBrainsMono(size: 17, weight: .bold))
+                .font(DesignTokens.headingFont(size: 17))
                 .foregroundStyle(.white)
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 16)
-                .background(Color.cfAccent)
-                .clipShape(RoundedRectangle(cornerRadius: 14))
+                .padding(.vertical, DesignTokens.paddingStandard)
+                .background(DesignTokens.vermillion)
+                .clipShape(RoundedRectangle(cornerRadius: DesignTokens.cornerRadiusButton))
         }
-        .padding(.horizontal, 32)
+        .padding(.horizontal, DesignTokens.paddingXLarge)
     }
 
     // MARK: - Actions
@@ -135,22 +135,22 @@ private struct OnboardingPageView: View {
     let subtitle: String
 
     var body: some View {
-        VStack(spacing: 24) {
+        VStack(spacing: DesignTokens.paddingLarge) {
             Spacer()
 
             Image(systemName: icon)
                 .font(.system(size: 72, weight: .light))
-                .foregroundStyle(Color.cfAccent)
+                .foregroundStyle(DesignTokens.vermillion)
 
             Text(headline)
-                .font(CFFont.jetBrainsMono(size: 24, weight: .bold))
-                .foregroundStyle(Color.cfTextPrimary)
+                .font(DesignTokens.headingFont(size: 24))
+                .foregroundStyle(DesignTokens.textPrimary)
 
             Text(subtitle)
-                .font(CFFont.inter(size: 17, weight: .regular))
-                .foregroundStyle(Color.cfTextSecondary)
+                .font(DesignTokens.bodyFont(size: 17))
+                .foregroundStyle(DesignTokens.textSecondary)
                 .multilineTextAlignment(.center)
-                .padding(.horizontal, 40)
+                .padding(.horizontal, DesignTokens.paddingXLarge)
 
             Spacer()
             Spacer()

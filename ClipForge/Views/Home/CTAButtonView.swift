@@ -2,8 +2,13 @@
 //  CTAButtonView.swift
 //  ClipForge
 //
-//  The CREATE GIF button with integrated progress ring.
-//  Visual state is driven entirely by ImportState from HomeViewModel.
+//  The CREATE GIF button — a 159pt frosted glass bubble that floats
+//  on top of the vermillion gradient. The circle border doubles as
+//  a progress ring during video import.
+//
+//  Figma spec: translucent frosted circle with white highlights,
+//  inner shadow at top edge, subtle glow extending ~25% beyond bounds.
+//  NOT a vermillion-filled circle.
 //
 //  STORY-012: HomeView — CTA Button with Progress Ring
 //
@@ -12,9 +17,8 @@ import SwiftUI
 
 /// The main CTA button on the Home screen.
 ///
-/// Renders as a circle with a vermillion border that transforms into
-/// a progress ring during import. All visual states map 1:1 to
-/// `ImportState` from the ViewModel.
+/// 159pt frosted glass bubble with layered depth effects.
+/// The outer ring transforms into a progress indicator during import.
 struct CTAButtonView: View {
 
     let importState: ImportState
@@ -26,35 +30,99 @@ struct CTAButtonView: View {
     /// Completion animation scale.
     @State private var completionScale: Double = 1.0
 
+    /// Breathing glow pulse opacity (idle state only).
+    @State private var glowOpacity: Double = 0.3
+
     // MARK: - Layout Constants
 
-    private let buttonSize: CGFloat = 120
-    private let strokeWidth: CGFloat = 5
+    private let size: CGFloat = DesignTokens.ctaSize
+    private let strokeWidth: CGFloat = DesignTokens.ctaStrokeWidth
 
     var body: some View {
         Button(action: onTap) {
             ZStack {
-                // Background track circle (always visible)
+                // Layer 1: Ambient glow — blurred vermillion behind the bubble
                 Circle()
-                    .stroke(trackColor, lineWidth: strokeWidth)
-                    .frame(width: buttonSize, height: buttonSize)
+                    .fill(DesignTokens.vermillion.opacity(0.3))
+                    .frame(
+                        width: size * (1 + DesignTokens.ctaGlowExtension),
+                        height: size * (1 + DesignTokens.ctaGlowExtension)
+                    )
+                    .blur(radius: 30)
 
-                // Progress overlay
+                // Layer 1.5: Breathing white glow pulse (idle only)
+                if isIdle {
+                    Circle()
+                        .fill(Color.white.opacity(glowOpacity))
+                        .frame(width: size + 16, height: size + 16)
+                        .blur(radius: 18)
+                }
+
+                // Layer 2: Outer ring / progress track
+                Circle()
+                    .stroke(trackStrokeColor, lineWidth: strokeWidth)
+                    .frame(width: size, height: size)
+
+                // Layer 3: Progress arc overlay
                 progressOverlay
 
-                // Inner fill for idle/detected states
-                if showInnerFill {
-                    Circle()
-                        .fill(Color.cfAccent.opacity(innerFillOpacity))
-                        .frame(width: buttonSize - strokeWidth * 2,
-                               height: buttonSize - strokeWidth * 2)
-                }
+                // Layer 4: Glass body — the frosted translucent circle
+                glassBody
+
+                // Layer 5: Inner highlight ring — white gradient at top edge
+                Circle()
+                    .stroke(
+                        LinearGradient(
+                            colors: [
+                                DesignTokens.glassHighlight,
+                                Color.white.opacity(0.0)
+                            ],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        ),
+                        lineWidth: 1.5
+                    )
+                    .frame(width: size - strokeWidth * 2 - 3, height: size - strokeWidth * 2 - 3)
             }
+            .shadow(color: Color.black.opacity(0.12), radius: 12, x: 0, y: 6)
             .scaleEffect(completionScale)
         }
         .disabled(!isInteractive)
+        .onAppear {
+            startGlowIfIdle()
+        }
         .onChange(of: importState) { _, newState in
             handleStateChange(newState)
+            if isIdle {
+                startGlowIfIdle()
+            } else {
+                glowOpacity = 0.3
+            }
+        }
+    }
+
+    // MARK: - Glass Body
+
+    /// The frosted glass circle: ultraThinMaterial over the gradient,
+    /// with a subtle white fill and border.
+    private var glassBody: some View {
+        let innerSize = size - strokeWidth * 2
+
+        return ZStack {
+            // Material blur backdrop — picks up the gradient behind it
+            Circle()
+                .fill(.ultraThinMaterial)
+                .frame(width: innerSize, height: innerSize)
+
+            // White tint overlay for the frosted look
+            Circle()
+                .fill(DesignTokens.glassBackground)
+                .frame(width: innerSize, height: innerSize)
+
+            // Glass border ring
+            Circle()
+                .stroke(DesignTokens.glassBorder, lineWidth: 1)
+                .frame(width: innerSize, height: innerSize)
         }
     }
 
@@ -67,8 +135,11 @@ struct CTAButtonView: View {
             // Indeterminate: rotating partial arc
             Circle()
                 .trim(from: 0, to: 0.3)
-                .stroke(Color.cfAccent, style: StrokeStyle(lineWidth: strokeWidth, lineCap: .round))
-                .frame(width: buttonSize, height: buttonSize)
+                .stroke(
+                    Color.white,
+                    style: StrokeStyle(lineWidth: strokeWidth + 1, lineCap: .round)
+                )
+                .frame(width: size, height: size)
                 .rotationEffect(.degrees(spinnerRotation))
                 .onAppear {
                     withAnimation(.linear(duration: 1.0).repeatForever(autoreverses: false)) {
@@ -83,16 +154,19 @@ struct CTAButtonView: View {
             // Determinate: clockwise fill from 12 o'clock
             Circle()
                 .trim(from: 0, to: progress)
-                .stroke(Color.cfAccent, style: StrokeStyle(lineWidth: strokeWidth, lineCap: .round))
-                .frame(width: buttonSize, height: buttonSize)
-                .rotationEffect(.degrees(-90)) // Start from 12 o'clock
+                .stroke(
+                    Color.white,
+                    style: StrokeStyle(lineWidth: strokeWidth + 1, lineCap: .round)
+                )
+                .frame(width: size, height: size)
+                .rotationEffect(.degrees(-90))
                 .animation(.linear(duration: 0.15), value: progress)
 
         case .success:
-            // Full ring
+            // Full ring — bright white
             Circle()
-                .stroke(Color.cfAccent, lineWidth: strokeWidth)
-                .frame(width: buttonSize, height: buttonSize)
+                .stroke(Color.white, lineWidth: strokeWidth + 1)
+                .frame(width: size, height: size)
 
         default:
             EmptyView()
@@ -101,39 +175,19 @@ struct CTAButtonView: View {
 
     // MARK: - State-Derived Properties
 
-    /// Track circle color — lighter when showing progress overlay.
-    private var trackColor: Color {
+    /// Track ring color — fades during progress states.
+    private var trackStrokeColor: Color {
         switch importState {
         case .extracting, .downloading:
-            return Color.cfAccent.opacity(0.2)
+            return Color.white.opacity(0.15)
         case .success:
-            return Color.cfAccent
+            return Color.white
         default:
-            return Color.cfAccent
+            return Color.white.opacity(0.25)
         }
     }
 
-    /// Whether to show the inner filled circle.
-    private var showInnerFill: Bool {
-        switch importState {
-        case .idle, .urlDetected, .youtubeDetected, .error:
-            return true
-        default:
-            return false
-        }
-    }
-
-    /// Inner fill opacity — brighter when URL detected.
-    private var innerFillOpacity: Double {
-        switch importState {
-        case .urlDetected:
-            return 0.15
-        default:
-            return 0.08
-        }
-    }
-
-    /// Button tappable in idle and urlDetected only.
+    /// Button tappable in idle, urlDetected, and error only.
     private var isInteractive: Bool {
         switch importState {
         case .idle, .urlDetected, .error:
@@ -143,25 +197,38 @@ struct CTAButtonView: View {
         }
     }
 
+    /// True when the button is in its resting idle state.
+    private var isIdle: Bool {
+        if case .idle = importState { return true }
+        return false
+    }
+
     // MARK: - Animations
 
     private func handleStateChange(_ newState: ImportState) {
         if case .success = newState {
-            // Brief completion pulse
             withAnimation(.easeInOut(duration: 0.25)) {
-                completionScale = 1.08
+                completionScale = 1.06
             }
             withAnimation(.easeInOut(duration: 0.25).delay(0.25)) {
                 completionScale = 1.0
             }
         }
     }
+
+    /// Starts the breathing glow pulse when in idle state.
+    private func startGlowIfIdle() {
+        guard isIdle else { return }
+        glowOpacity = 0.3
+        withAnimation(.easeInOut(duration: 2.0).repeatForever(autoreverses: true)) {
+            glowOpacity = 0.8
+        }
+    }
 }
 
 // MARK: - Label Below Button
 
-/// The text label that appears below the CTA button.
-/// Changes based on ImportState.
+/// Text label below the CTA button. Changes with ImportState.
 struct CTALabelView: View {
 
     let importState: ImportState
@@ -171,49 +238,74 @@ struct CTALabelView: View {
             switch importState {
             case .idle:
                 Text("CREATE GIF")
-                    .font(CFFont.jetBrainsMono(size: 16))
-                    .foregroundStyle(Color.cfTextPrimary)
+                    .font(DesignTokens.headingFont(size: DesignTokens.ctaLabelSize))
+                    .foregroundStyle(DesignTokens.textBlack)
 
             case .urlDetected(_, let platform):
                 Text("Create from \(platform)")
-                    .font(CFFont.jetBrainsMono(size: 16))
-                    .foregroundStyle(Color.cfTextPrimary)
+                    .font(DesignTokens.headingFont(size: DesignTokens.ctaLabelSize))
+                    .foregroundStyle(DesignTokens.textBlack)
 
             case .extracting:
                 Text("Preparing your video…")
-                    .font(CFFont.inter(size: 14))
-                    .foregroundStyle(Color.cfTextSecondary)
+                    .font(DesignTokens.bodyFont(size: 14))
+                    .foregroundStyle(DesignTokens.mutedWarm)
 
             case .downloading(let progress):
                 Text("Importing… \(Int(progress * 100))%")
-                    .font(CFFont.inter(size: 14))
-                    .foregroundStyle(Color.cfTextSecondary)
+                    .font(DesignTokens.bodyFont(size: 14))
+                    .foregroundStyle(DesignTokens.mutedWarm)
 
             case .success:
                 EmptyView()
 
             case .youtubeDetected:
-                EmptyView() // Message shown via error area
+                EmptyView()
 
             case .error:
-                EmptyView() // Message shown via error area
+                EmptyView()
             }
         }
     }
 }
 
-#Preview("Idle") {
-    CTAButtonView(importState: .idle, onTap: {})
-}
+#Preview("Idle — on gradient") {
+    ZStack {
+        DesignTokens.background.ignoresSafeArea()
+        LinearGradient(
+            stops: [
+                .init(color: DesignTokens.vermillion, location: 0),
+                .init(color: DesignTokens.vermillion.opacity(0), location: DesignTokens.gradientStop)
+            ],
+            startPoint: .top,
+            endPoint: .bottom
+        ).ignoresSafeArea()
 
-#Preview("URL Detected") {
-    CTAButtonView(importState: .urlDetected(url: URL(string: "https://x.com/test/status/123")!, platform: "Twitter/X"), onTap: {})
+        VStack(spacing: DesignTokens.paddingLarge) {
+            CTAButtonView(importState: .idle, onTap: {})
+            CTALabelView(importState: .idle)
+        }
+    }
 }
 
 #Preview("Extracting") {
-    CTAButtonView(importState: .extracting, onTap: {})
+    ZStack {
+        DesignTokens.background.ignoresSafeArea()
+        LinearGradient(
+            stops: [
+                .init(color: DesignTokens.vermillion, location: 0),
+                .init(color: DesignTokens.vermillion.opacity(0), location: DesignTokens.gradientStop)
+            ],
+            startPoint: .top,
+            endPoint: .bottom
+        ).ignoresSafeArea()
+        CTAButtonView(importState: .extracting, onTap: {})
+    }
 }
 
 #Preview("Downloading") {
-    CTAButtonView(importState: .downloading(progress: 0.65), onTap: {})
+    ZStack {
+        DesignTokens.background.ignoresSafeArea()
+        CTAButtonView(importState: .downloading(progress: 0.65), onTap: {})
+    }
 }
