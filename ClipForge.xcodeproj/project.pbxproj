@@ -168,6 +168,7 @@
 		CD5C949A2F905A33009A5793 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
 		CD5C949C2F905B39009A5793 /* SubscriptionRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SubscriptionRouter.swift; sourceTree = "<group>"; };
 		CD5C949E2F905F65009A5793 /* UpgradeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpgradeView.swift; sourceTree = "<group>"; };
+		CD5C94A02F9167F9009A5793 /* Secrets.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Secrets.xcconfig; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -184,6 +185,7 @@
 		AE000001 = {
 			isa = PBXGroup;
 			children = (
+				CD5C94A02F9167F9009A5793 /* Secrets.xcconfig */,
 				AE000002 /* ClipForge */,
 				AE000009 /* Products */,
 			);
@@ -644,6 +646,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLIPFORGE_API_KEY = cf_staging_d5c9a33987058b42bc93d2eab974346c91ada1b69392facf;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = "";
@@ -676,6 +679,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLIPFORGE_API_KEY = cf_staging_d5c9a33987058b42bc93d2eab974346c91ada1b69392facf;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = "";

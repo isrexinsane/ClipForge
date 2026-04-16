@@ -47,3 +47,7 @@ playground.xcworkspace
 ## Environment variables (sensitive)
 .env
 .env.*
+
+## Xcconfig secrets (API keys, tokens)
+ClipForge/Config/Secrets.xcconfig
+Secrets.xcconfig
