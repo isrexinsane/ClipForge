@@ -23,11 +23,9 @@ struct MediaLibraryView: View {
 
     @ObservedObject var historyStore: GIFHistoryStore
 
-    @State private var shareItems: [Any] = []
-    @State private var showShareSheet = false
+    @State private var shareURL: URL?
     @State private var showShareError = false
     @State private var isLoadingShare = false
-    @State private var shareFileURL: URL?
 
     var body: some View {
         // Background gradient handled by ContentView — this view is transparent.
@@ -47,14 +45,8 @@ struct MediaLibraryView: View {
                 Spacer()
                     .frame(height: DesignTokens.paddingXLarge + DesignTokens.paddingSmall)
             }
-        .sheet(isPresented: $showShareSheet, onDismiss: {
-            // Clean up temp file after share sheet closes
-            if let url = shareFileURL {
-                try? FileManager.default.removeItem(at: url)
-                shareFileURL = nil
-            }
-        }) {
-            ShareSheet(activityItems: shareItems)
+        .sheet(item: $shareURL) { url in
+            ShareSheet(activityItems: [url])
         }
         .alert("GIF Unavailable", isPresented: $showShareError) {
             Button("OK", role: .cancel) {}
@@ -124,6 +116,9 @@ struct MediaLibraryView: View {
     private func slotView(index: Int, entries: [GIFHistoryEntry], height: CGFloat) -> some View {
         if index < entries.count {
             GIFGlassCard(entry: entries[index], height: height) {
+                #if DEBUG
+                print("DEBUG: gallery tap on index \(index), entry: \(entries[index].localAssetIdentifier)")
+                #endif
                 fetchAndShare(identifier: entries[index].localAssetIdentifier)
             }
         } else {
@@ -154,9 +149,15 @@ struct MediaLibraryView: View {
         guard !isLoadingShare else { return }
         isLoadingShare = true
 
-        // Reset previous share state
-        shareItems = []
-        showShareSheet = false
+        #if DEBUG
+        print("DEBUG: Gallery fetchAndShare tapped for asset: \(identifier)")
+        #endif
+
+        // Clean up any previous temp file
+        if let oldURL = shareURL {
+            try? FileManager.default.removeItem(at: oldURL)
+            shareURL = nil
+        }
 
         let results = PHAsset.fetchAssets(withLocalIdentifiers: [identifier], options: nil)
         guard let asset = results.firstObject else {
@@ -191,14 +192,13 @@ struct MediaLibraryView: View {
                     isLoadingShare = false
                     if error == nil, !gifData.isEmpty {
                         // Write to temp file with .gif extension so receiving
-                        // apps recognize animated GIF (raw Data pastes as still image)
+                        // apps recognize animated GIF (raw Data pastes as still image).
+                        // Setting shareURL triggers .sheet(item:) presentation.
                         let tempURL = FileManager.default.temporaryDirectory
                             .appendingPathComponent("ClipForge-\(UUID().uuidString).gif")
                         do {
                             try gifData.write(to: tempURL)
-                            shareFileURL = tempURL
-                            shareItems = [tempURL]
-                            showShareSheet = true
+                            shareURL = tempURL
                             #if DEBUG
                             print("DEBUG: wrote GIF to temp file for share: \(tempURL.lastPathComponent)")
                             #endif
@@ -242,50 +242,52 @@ struct GIFGlassCard: View {
     private let corner = DesignTokens.glassCornerRadius
 
     var body: some View {
-        Button(action: onTap) {
-            ZStack {
-                // Glass card background — visible around edges and through
-                // the thumbnail's rounded corners.
-                RoundedRectangle(cornerRadius: corner)
-                    .fill(.ultraThinMaterial)
+        ZStack {
+            // Glass card background — visible around edges and through
+            // the thumbnail's rounded corners.
+            RoundedRectangle(cornerRadius: corner)
+                .fill(.ultraThinMaterial)
 
-                RoundedRectangle(cornerRadius: corner)
-                    .fill(DesignTokens.glassBackground)
+            RoundedRectangle(cornerRadius: corner)
+                .fill(DesignTokens.glassBackground)
 
-                // Thumbnail — fills the card but clipped to rounded rect
-                if let thumbnail {
-                    Image(uiImage: thumbnail)
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .clipShape(RoundedRectangle(cornerRadius: corner))
-                } else {
-                    ProgressView()
-                        .tint(DesignTokens.mutedWarm)
-                }
-
-                // Glass border — always on top of thumbnail
-                RoundedRectangle(cornerRadius: corner)
-                    .stroke(DesignTokens.glassBorder, lineWidth: 1)
-
-                // Inner highlight — top edge glow
-                RoundedRectangle(cornerRadius: corner)
-                    .stroke(
-                        LinearGradient(
-                            colors: [DesignTokens.glassHighlight, Color.clear],
-                            startPoint: .top,
-                            endPoint: .center
-                        ),
-                        lineWidth: 1
-                    )
-                    .padding(1)
+            // Thumbnail — fills the card but clipped to rounded rect
+            if let thumbnail {
+                Image(uiImage: thumbnail)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .clipShape(RoundedRectangle(cornerRadius: corner))
+                    .allowsHitTesting(false)
+            } else {
+                ProgressView()
+                    .tint(DesignTokens.mutedWarm)
             }
-            .frame(maxWidth: .infinity)
-            .frame(height: height)
-            .clipShape(RoundedRectangle(cornerRadius: corner))
-            .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 4)
+
+            // Glass border — always on top of thumbnail
+            RoundedRectangle(cornerRadius: corner)
+                .stroke(DesignTokens.glassBorder, lineWidth: 1)
+                .allowsHitTesting(false)
+
+            // Inner highlight — top edge glow
+            RoundedRectangle(cornerRadius: corner)
+                .stroke(
+                    LinearGradient(
+                        colors: [DesignTokens.glassHighlight, Color.clear],
+                        startPoint: .top,
+                        endPoint: .center
+                    ),
+                    lineWidth: 1
+                )
+                .padding(1)
+                .allowsHitTesting(false)
         }
-        .buttonStyle(.plain)
+        .frame(maxWidth: .infinity)
+        .frame(height: height)
+        .clipShape(RoundedRectangle(cornerRadius: corner))
+        .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 4)
+        .contentShape(Rectangle())
+        .onTapGesture { onTap() }
         .task(id: entry.localAssetIdentifier) {
             await loadThumbnail()
         }

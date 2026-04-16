@@ -2,6 +2,12 @@
 
 import Foundation
 
+// MARK: - URL + Identifiable (for SwiftUI .sheet(item:) binding)
+
+extension URL: @retroactive Identifiable {
+    public var id: String { absoluteString }
+}
+
 // MARK: - App-wide Notification Names
 
 extension Notification.Name {
