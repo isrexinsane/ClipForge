@@ -35,20 +35,10 @@ struct MediaLibraryView: View {
                     .padding(.horizontal, DesignTokens.paddingStandard)
                     .padding(.top, 31)
 
-                if historyStore.entries.isEmpty {
-                    ScrollView {
-                        placeholderGrid
-                            .padding(.horizontal, DesignTokens.paddingStandard)
-                            .padding(.top, DesignTokens.paddingStandard)
-                            .padding(.bottom, DesignTokens.paddingXLarge)
-                    }
-                } else {
-                    ScrollView {
-                        masonryGrid
-                            .padding(.horizontal, DesignTokens.paddingStandard)
-                            .padding(.top, DesignTokens.paddingStandard)
-                            .padding(.bottom, DesignTokens.paddingXLarge)
-                    }
+                ScrollView {
+                    unifiedMasonryGrid(entries: historyStore.entries)
+                        .padding(.top, DesignTokens.paddingStandard)
+                        .padding(.bottom, DesignTokens.paddingXLarge)
                 }
 
                 // Reserve space for page dots
@@ -76,80 +66,60 @@ struct MediaLibraryView: View {
         }
     }
 
-    // MARK: - Masonry Grid
+    // MARK: - Unified Masonry Grid
 
-    /// Alternating masonry layout: odd rows have a tall card left + 2 short
-    /// cards stacked right; even rows invert. Cards fade in opacity by row.
-    private var masonryGrid: some View {
-        let entries = historyStore.entries
-        let pairs = stride(from: 0, to: entries.count, by: 3).map { startIdx in
-            let end = min(startIdx + 3, entries.count)
-            return Array(entries[startIdx..<end])
-        }
-
-        return VStack(spacing: DesignTokens.paddingSmall) {
-            ForEach(Array(pairs.enumerated()), id: \.offset) { rowIndex, group in
-                masonryRow(group: group, rowIndex: rowIndex)
-                    .opacity(opacityForRow(rowIndex))
-            }
-        }
-    }
-
-    /// Builds one masonry row from up to 3 entries.
-    /// Even rows: tall left, 2-stack right. Odd rows: 2-stack left, tall right.
-    @ViewBuilder
-    private func masonryRow(group: [GIFHistoryEntry], rowIndex: Int) -> some View {
+    /// Always renders 9 slots (3 rows × 3 per row) in the masonry pattern.
+    /// Slots with GIF entries show a GIFGlassCard; remaining slots show a
+    /// PlaceholderGlassCard. This handles both the empty state and the
+    /// partially-filled state with one code path.
+    ///
+    /// Layout per row (repeating):
+    /// - Even rows (0, 2): TALL left, SHORT right-top, SHORT right-bottom
+    /// - Odd rows (1): SHORT left-top, SHORT left-bottom, TALL right
+    private func unifiedMasonryGrid(entries: [GIFHistoryEntry]) -> some View {
+        let totalSlots = 9
         let tallHeight: CGFloat = 270
         let shortHeight: CGFloat = 128
         let gap: CGFloat = 11
 
-        if group.count >= 3 {
-            if rowIndex.isMultiple(of: 2) {
-                // Tall left, 2-stack right
+        return VStack(spacing: gap) {
+            ForEach(0..<3, id: \.self) { rowIndex in
+                let base = rowIndex * 3
+
                 HStack(spacing: DesignTokens.paddingSmall) {
-                    GIFGlassCard(entry: group[0], height: tallHeight) {
-                        fetchAndShare(identifier: group[0].localAssetIdentifier)
-                    }
-                    VStack(spacing: gap) {
-                        GIFGlassCard(entry: group[1], height: shortHeight) {
-                            fetchAndShare(identifier: group[1].localAssetIdentifier)
+                    if rowIndex.isMultiple(of: 2) {
+                        // Even row: tall left, two short stacked right
+                        slotView(index: base, entries: entries, height: tallHeight)
+                        VStack(spacing: gap) {
+                            slotView(index: base + 1, entries: entries, height: shortHeight)
+                            slotView(index: base + 2, entries: entries, height: shortHeight)
                         }
-                        GIFGlassCard(entry: group[2], height: shortHeight) {
-                            fetchAndShare(identifier: group[2].localAssetIdentifier)
+                    } else {
+                        // Odd row: two short stacked left, tall right
+                        VStack(spacing: gap) {
+                            slotView(index: base, entries: entries, height: shortHeight)
+                            slotView(index: base + 1, entries: entries, height: shortHeight)
                         }
+                        slotView(index: base + 2, entries: entries, height: tallHeight)
                     }
                 }
                 .frame(height: tallHeight)
-            } else {
-                // 2-stack left, tall right
-                HStack(spacing: DesignTokens.paddingSmall) {
-                    VStack(spacing: gap) {
-                        GIFGlassCard(entry: group[0], height: shortHeight) {
-                            fetchAndShare(identifier: group[0].localAssetIdentifier)
-                        }
-                        GIFGlassCard(entry: group[1], height: shortHeight) {
-                            fetchAndShare(identifier: group[1].localAssetIdentifier)
-                        }
-                    }
-                    GIFGlassCard(entry: group[2], height: tallHeight) {
-                        fetchAndShare(identifier: group[2].localAssetIdentifier)
-                    }
-                }
-                .frame(height: tallHeight)
+                .opacity(opacityForRow(rowIndex))
             }
-        } else if group.count == 2 {
-            HStack(spacing: DesignTokens.paddingSmall) {
-                GIFGlassCard(entry: group[0], height: shortHeight) {
-                    fetchAndShare(identifier: group[0].localAssetIdentifier)
-                }
-                GIFGlassCard(entry: group[1], height: shortHeight) {
-                    fetchAndShare(identifier: group[1].localAssetIdentifier)
-                }
+        }
+        .padding(.horizontal, DesignTokens.paddingStandard)
+    }
+
+    /// Returns either a GIF-filled glass card or an empty placeholder,
+    /// depending on whether an entry exists at the given index.
+    @ViewBuilder
+    private func slotView(index: Int, entries: [GIFHistoryEntry], height: CGFloat) -> some View {
+        if index < entries.count {
+            GIFGlassCard(entry: entries[index], height: height) {
+                fetchAndShare(identifier: entries[index].localAssetIdentifier)
             }
-        } else if group.count == 1 {
-            GIFGlassCard(entry: group[0], height: shortHeight) {
-                fetchAndShare(identifier: group[0].localAssetIdentifier)
-            }
+        } else {
+            PlaceholderGlassCard(height: height)
         }
     }
 
@@ -160,63 +130,6 @@ struct MediaLibraryView: View {
         case 1: return 0.5
         case 2: return 0.4
         default: return 0.35
-        }
-    }
-
-    // MARK: - Placeholder Grid (Empty State)
-
-    /// Shows 9 empty frosted glass cards in the same masonry pattern
-    /// so the gallery feels alive even before any GIFs are created.
-    private var placeholderGrid: some View {
-        let placeholderCount = 9 // 3 rows × 3 cards each
-        let groups = stride(from: 0, to: placeholderCount, by: 3).map { start in
-            min(start + 3, placeholderCount) - start
-        }
-
-        return VStack(spacing: DesignTokens.paddingSmall) {
-            ForEach(Array(groups.enumerated()), id: \.offset) { rowIndex, count in
-                placeholderRow(count: count, rowIndex: rowIndex)
-                    .opacity(opacityForRow(rowIndex))
-            }
-        }
-    }
-
-    /// Builds one placeholder masonry row with the same tall/short alternation.
-    @ViewBuilder
-    private func placeholderRow(count: Int, rowIndex: Int) -> some View {
-        let tallHeight: CGFloat = 270
-        let shortHeight: CGFloat = 128
-        let gap: CGFloat = 11
-
-        if count >= 3 {
-            if rowIndex.isMultiple(of: 2) {
-                // Tall left, 2-stack right
-                HStack(spacing: DesignTokens.paddingSmall) {
-                    PlaceholderGlassCard(height: tallHeight)
-                    VStack(spacing: gap) {
-                        PlaceholderGlassCard(height: shortHeight)
-                        PlaceholderGlassCard(height: shortHeight)
-                    }
-                }
-                .frame(height: tallHeight)
-            } else {
-                // 2-stack left, tall right
-                HStack(spacing: DesignTokens.paddingSmall) {
-                    VStack(spacing: gap) {
-                        PlaceholderGlassCard(height: shortHeight)
-                        PlaceholderGlassCard(height: shortHeight)
-                    }
-                    PlaceholderGlassCard(height: tallHeight)
-                }
-                .frame(height: tallHeight)
-            }
-        } else if count == 2 {
-            HStack(spacing: DesignTokens.paddingSmall) {
-                PlaceholderGlassCard(height: shortHeight)
-                PlaceholderGlassCard(height: shortHeight)
-            }
-        } else if count == 1 {
-            PlaceholderGlassCard(height: shortHeight)
         }
     }
 
