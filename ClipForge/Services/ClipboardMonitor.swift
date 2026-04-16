@@ -33,6 +33,9 @@ final class ClipboardMonitor: ObservableObject {
     /// `true` when the clipboard contains a YouTube URL (detected and rejected).
     @Published private(set) var isYouTubeURL: Bool = false
 
+    /// `true` when the clipboard contains a Reddit URL (removed from MVP).
+    @Published private(set) var isRedditURL: Bool = false
+
     // Track the last checked string to avoid re-processing the same content.
     private var lastCheckedString: String?
 
@@ -62,6 +65,7 @@ final class ClipboardMonitor: ObservableObject {
         detectedURL = nil
         detectedPlatform = nil
         isYouTubeURL = false
+        isRedditURL = false
 
         guard let text = pasteboardString?.trimmingCharacters(in: .whitespacesAndNewlines),
               !text.isEmpty,
@@ -87,6 +91,15 @@ final class ClipboardMonitor: ObservableObject {
             return
         }
 
+        // Check Reddit — removed from MVP, rejected with message
+        if SupportedPlatform.isRedditURL(url) {
+            #if DEBUG
+            print("ClipboardMonitor: Reddit URL detected and rejected")
+            #endif
+            isRedditURL = true
+            return
+        }
+
         // Check supported platforms with host + path validation
         if let platform = SupportedPlatform.platform(forURL: url) {
             #if DEBUG
@@ -107,5 +120,6 @@ final class ClipboardMonitor: ObservableObject {
         detectedURL = nil
         detectedPlatform = nil
         isYouTubeURL = false
+        isRedditURL = false
     }
 }

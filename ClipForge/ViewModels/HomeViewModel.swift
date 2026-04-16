@@ -56,8 +56,10 @@ final class HomeViewModel: ObservableObject {
         // Observe supported URL detection
         clipboardMonitor.$detectedURL
             .combineLatest(clipboardMonitor.$detectedPlatform, clipboardMonitor.$isYouTubeURL)
+            .combineLatest(clipboardMonitor.$isRedditURL)
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] url, platform, isYouTube in
+            .sink { [weak self] combined, isReddit in
+                let (url, platform, isYouTube) = combined
                 guard let self else { return }
 
                 // Don't override active import states
@@ -76,6 +78,11 @@ final class HomeViewModel: ObservableObject {
                     print("HomeViewModel: YouTube URL detected — showing rejection message")
                     #endif
                     self.importState = .youtubeDetected
+                } else if isReddit {
+                    #if DEBUG
+                    print("HomeViewModel: Reddit URL detected — showing rejection message")
+                    #endif
+                    self.importState = .redditDetected
                 } else if let url, let platform {
                     #if DEBUG
                     print("HomeViewModel: received URL from clipboard: \(url.absoluteString) (\(platform))")
@@ -142,15 +149,19 @@ final class HomeViewModel: ObservableObject {
         do {
             extractionResponse = try await apiService.extractVideo(url: url.absoluteString)
             #if DEBUG
-            print("HomeViewModel: extraction succeeded — video_url = \(extractionResponse.videoURL.absoluteString)")
+            print("DEBUG: extraction response — status: \(extractionResponse.status), video_url: \(extractionResponse.videoURL.absoluteString)")
+            print("DEBUG: extraction metadata — platform: \(extractionResponse.platform), duration: \(extractionResponse.duration), size: \(extractionResponse.fileSize)")
             #endif
         } catch let error as ClipForgeError {
             #if DEBUG
-            print("HomeViewModel: extraction failed — \(error)")
+            print("DEBUG: import error — \(error) — \(error.errorDescription ?? "no description")")
             #endif
             importState = .error(message: error.errorDescription ?? "Something went wrong. Please try again.")
             return
         } catch {
+            #if DEBUG
+            print("DEBUG: import error (non-ClipForge) — \(error)")
+            #endif
             importState = .error(message: "Something went wrong. Please try again.")
             return
         }
@@ -164,27 +175,44 @@ final class HomeViewModel: ObservableObject {
         // Resolve video_url: backend may return a relative path (e.g. "/v1/media/...")
         // instead of the full URL the API Contract specifies. Handle both cases.
         let mediaURL: URL
-        if extractionResponse.videoURL.scheme != nil {
-            // Already absolute (has scheme like https://) — use as-is
+        let rawVideoURLString = extractionResponse.videoURL.absoluteString
+        #if DEBUG
+        print("DEBUG: raw video_url string: \(rawVideoURLString)")
+        print("DEBUG: video_url scheme: \(extractionResponse.videoURL.scheme ?? "nil")")
+        #endif
+
+        if extractionResponse.videoURL.scheme != nil,
+           extractionResponse.videoURL.host != nil {
+            // Already absolute (has scheme + host like https://...) — use as-is
             mediaURL = extractionResponse.videoURL
+            #if DEBUG
+            print("DEBUG: video_url is absolute — using as-is")
+            #endif
         } else {
             // Relative path — prepend the backend origin (scheme + host).
             // Configuration.baseURL includes /v1 so we use just the origin
             // to avoid doubling the path prefix.
             let origin = Configuration.baseURL.scheme! + "://" + Configuration.baseURL.host!
-            guard let resolved = URL(string: origin + extractionResponse.videoURL.absoluteString) else {
+            let resolvedString = origin + rawVideoURLString
+            #if DEBUG
+            print("DEBUG: resolving relative URL — origin: \(origin), full: \(resolvedString)")
+            #endif
+            guard let resolved = URL(string: resolvedString) else {
                 #if DEBUG
-                print("HomeViewModel: could not resolve video_url — \(extractionResponse.videoURL)")
+                print("DEBUG: import error — could not construct URL from: \(resolvedString)")
                 #endif
                 importState = .error(message: "Something went wrong. Please try again.")
                 return
             }
             mediaURL = resolved
             #if DEBUG
-            print("HomeViewModel: resolved relative video_url → \(mediaURL.absoluteString)")
+            print("DEBUG: resolved video URL — \(mediaURL.absoluteString)")
             #endif
         }
 
+        #if DEBUG
+        print("DEBUG: starting video retrieval from \(mediaURL.absoluteString)")
+        #endif
         let localURL: URL
         do {
             localURL = try await apiService.downloadMedia(
@@ -199,9 +227,15 @@ final class HomeViewModel: ObservableObject {
                 }
             }
         } catch let error as ClipForgeError {
+            #if DEBUG
+            print("DEBUG: import error (retrieval) — \(error) — \(error.errorDescription ?? "no description")")
+            #endif
             importState = .error(message: error.errorDescription ?? "Something went wrong. Please try again.")
             return
         } catch {
+            #if DEBUG
+            print("DEBUG: import error (retrieval, non-ClipForge) — \(error)")
+            #endif
             importState = .error(message: "Something went wrong. Please try again.")
             return
         }
@@ -210,7 +244,7 @@ final class HomeViewModel: ObservableObject {
 
         // Success — trigger Trim Modal
         #if DEBUG
-        print("HomeViewModel: extraction complete, opening trim modal")
+        print("DEBUG: import complete, local file at \(localURL.lastPathComponent), opening trim modal")
         #endif
         let metadata = extractionResponse.toVideoMetadata()
         importState = .success(localVideoURL: localURL, metadata: metadata)
@@ -223,6 +257,9 @@ final class HomeViewModel: ObservableObject {
     /// Exact copy from STORY-011 AC-6.
     static let youTubeMessage = "YouTube isn't supported to keep ClipForge available on the App Store."
 
+    /// User-facing message for the Reddit rejection state.
+    static let redditMessage = "Reddit isn't supported yet. ClipForge works with X, Instagram, TikTok, and Twitch."
+
     /// The error message to display, if currently in error state.
     var errorMessage: String? {
         if case .error(let message) = importState {
@@ -230,6 +267,9 @@ final class HomeViewModel: ObservableObject {
         }
         if case .youtubeDetected = importState {
             return Self.youTubeMessage
+        }
+        if case .redditDetected = importState {
+            return Self.redditMessage
         }
         return nil
     }

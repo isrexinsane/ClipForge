@@ -19,6 +19,7 @@ enum ImportState: Equatable {
     case idle
     case urlDetected(url: URL, platform: String)
     case youtubeDetected
+    case redditDetected
     case extracting
     case downloading(progress: Double)
     case success(localVideoURL: URL, metadata: VideoMetadata)
@@ -32,6 +33,8 @@ enum ImportState: Equatable {
         case let (.urlDetected(lURL, lPlatform), .urlDetected(rURL, rPlatform)):
             return lURL == rURL && lPlatform == rPlatform
         case (.youtubeDetected, .youtubeDetected):
+            return true
+        case (.redditDetected, .redditDetected):
             return true
         case (.extracting, .extracting):
             return true

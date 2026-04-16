@@ -17,7 +17,6 @@ import Foundation
 enum SupportedPlatform: String, Codable, CaseIterable, Sendable {
     case twitter
     case instagram
-    case reddit
     case tiktok
     case twitch
 
@@ -28,7 +27,6 @@ enum SupportedPlatform: String, Codable, CaseIterable, Sendable {
         switch self {
         case .twitter:   return "Twitter/X"
         case .instagram: return "Instagram"
-        case .reddit:    return "Reddit"
         case .tiktok:    return "TikTok"
         case .twitch:    return "Twitch"
         }
@@ -45,8 +43,6 @@ enum SupportedPlatform: String, Codable, CaseIterable, Sendable {
             return ["twitter.com", "www.twitter.com", "x.com", "www.x.com", "mobile.twitter.com", "m.twitter.com"]
         case .instagram:
             return ["instagram.com", "www.instagram.com", "m.instagram.com"]
-        case .reddit:
-            return ["reddit.com", "www.reddit.com", "old.reddit.com", "v.redd.it"]
         case .tiktok:
             return ["tiktok.com", "www.tiktok.com", "m.tiktok.com", "vm.tiktok.com"]
         case .twitch:
@@ -72,11 +68,6 @@ enum SupportedPlatform: String, Codable, CaseIterable, Sendable {
             return [
                 #"^/(reel|p)/[^/]+"#,              // /reel/{id} or /p/{id}
                 #"^/stories/[^/]+/\d+"#             // /stories/{user}/{id}
-            ]
-        case .reddit:
-            return [
-                #"^/r/[^/]+/comments/[^/]+"#,      // /r/{sub}/comments/{id}/...
-                #"^/[A-Za-z0-9]+"#                  // v.redd.it/{id}
             ]
         case .tiktok:
             return [
@@ -113,7 +104,7 @@ enum SupportedPlatform: String, Codable, CaseIterable, Sendable {
 
         let path = url.path
         // Shortlink domains accept any path
-        let shortlinkHosts = ["t.co", "vm.tiktok.com", "v.redd.it"]
+        let shortlinkHosts = ["t.co", "vm.tiktok.com"]
         if shortlinkHosts.contains(host) && !path.isEmpty && path != "/" {
             return platform
         }
@@ -136,5 +127,20 @@ enum SupportedPlatform: String, Codable, CaseIterable, Sendable {
     static func isYouTubeURL(_ url: URL) -> Bool {
         guard let host = url.host?.lowercased() else { return false }
         return youTubeHosts.contains(host)
+    }
+
+    // MARK: - Reddit Detection
+
+    /// Hostnames that identify a Reddit URL. Removed from MVP — extraction
+    /// unreliable via proxy. Reddit URLs return UNSUPPORTED_PLATFORM.
+    static let redditHosts: Set<String> = [
+        "reddit.com", "www.reddit.com", "old.reddit.com",
+        "v.redd.it", "m.reddit.com"
+    ]
+
+    /// Returns `true` if the given URL belongs to Reddit.
+    static func isRedditURL(_ url: URL) -> Bool {
+        guard let host = url.host?.lowercased() else { return false }
+        return redditHosts.contains(host)
     }
 }

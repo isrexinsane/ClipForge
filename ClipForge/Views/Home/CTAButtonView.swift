@@ -259,7 +259,7 @@ struct CTALabelView: View {
             case .success:
                 EmptyView()
 
-            case .youtubeDetected:
+            case .youtubeDetected, .redditDetected:
                 EmptyView()
 
             case .error:

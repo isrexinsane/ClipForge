@@ -31,7 +31,9 @@ final class APIService: NSObject, Sendable {
 
     private override init() {
         let config = URLSessionConfiguration.default
-        config.timeoutIntervalForRequest = 30
+        // Instagram extractions with server-side H.264 transcoding can take
+        // 30-60s. Allow enough time for the backend to complete.
+        config.timeoutIntervalForRequest = 90
         self.session = URLSession(configuration: config)
 
         self.decoder = JSONDecoder()

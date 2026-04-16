@@ -153,7 +153,7 @@ struct HomeView: View {
                 .animation(.easeInOut(duration: 0.2), value: viewModel.importState)
 
             // Platform list — Inter Bold 14px, muted warm
-            Text("X · Instagram · Reddit · TikTok · Twitch")
+            Text("X · Instagram · TikTok · Twitch")
                 .font(DesignTokens.bodyFontBold(size: DesignTokens.platformListSize))
                 .foregroundStyle(DesignTokens.mutedWarm)
         }

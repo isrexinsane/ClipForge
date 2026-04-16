@@ -126,8 +126,8 @@ test_extraction "Twitter/X" "https://x.com/NASA/status/1871619786259976519"
 # Instagram
 test_extraction "Instagram" "https://www.instagram.com/reel/DFz8MdSJnEr/"
 
-# Reddit
-test_extraction "Reddit" "https://www.reddit.com/r/aww/comments/1jmk7m6/golden_retriever_puppy_is_the_cutest/"
+# Reddit — removed from MVP, should return UNSUPPORTED_PLATFORM
+# test_extraction "Reddit" "https://www.reddit.com/r/aww/comments/1jmk7m6/golden_retriever_puppy_is_the_cutest/"
 
 # TikTok
 test_extraction "TikTok" "https://www.tiktok.com/@nasa/video/7456189918498498858"

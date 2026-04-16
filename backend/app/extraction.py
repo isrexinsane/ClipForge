@@ -5,6 +5,9 @@ yt-dlp is invoked via asyncio subprocess (not imported as a library) to
 provide process isolation and timeout control per Architecture Spec §7.3.
 If yt-dlp hangs or crashes, only the subprocess is affected.
 
+Supported platforms: Twitter/X, Instagram, TikTok, Twitch.
+Reddit and YouTube are rejected at the URL validation layer.
+
 Proxy and cookie support (EXTRACT-CONFIG):
     - YTDLP_PROXY env var: passed as --proxy to yt-dlp. Use a residential
       proxy URL to avoid datacenter IP blocking by social media platforms.
@@ -30,10 +33,10 @@ TEMP_DIR = Path("/tmp/clipforge")
 TEMP_DIR.mkdir(parents=True, exist_ok=True)
 
 # yt-dlp subprocess timeout in seconds.
-# Reddit requires longer because yt-dlp downloads separate audio + video
-# streams and merges them via ffmpeg, which exceeds 30s through a proxy.
+# Instagram needs longer because --recode-video mp4 triggers server-side
+# ffmpeg transcoding from HEVC to H.264.
 EXTRACTION_TIMEOUT_SECONDS: int = 30
-REDDIT_EXTRACTION_TIMEOUT_SECONDS: int = 60
+INSTAGRAM_EXTRACTION_TIMEOUT_SECONDS: int = 60
 
 # Cookie file paths
 COOKIES_FILE = Path("/tmp/clipforge_cookies.txt")
@@ -43,7 +46,6 @@ INSTAGRAM_COOKIES_FILE = Path("/tmp/clipforge_instagram_cookies.txt")
 _PLATFORM_DISPLAY_NAMES: dict[str, str] = {
     "twitter": "Twitter/X",
     "instagram": "Instagram",
-    "reddit": "Reddit",
     "tiktok": "TikTok",
     "twitch": "Twitch",
 }
@@ -186,7 +188,7 @@ async def extract_video(url: str, platform: str) -> ExtractionResult:
 
     Raises:
         ExtractionError: yt-dlp failed (non-zero exit, no output file).
-        ExtractionTimeout: yt-dlp exceeded the platform timeout (60s Reddit, 30s others).
+        ExtractionTimeout: yt-dlp exceeded the timeout (60s Instagram, 30s others).
     """
     file_id = str(uuid.uuid4())
     output_template = str(TEMP_DIR / f"{file_id}.%(ext)s")
@@ -211,7 +213,7 @@ async def extract_video(url: str, platform: str) -> ExtractionResult:
     ]
 
     display_name = _PLATFORM_DISPLAY_NAMES.get(platform, platform)
-    timeout = REDDIT_EXTRACTION_TIMEOUT_SECONDS if platform == "reddit" else EXTRACTION_TIMEOUT_SECONDS
+    timeout = INSTAGRAM_EXTRACTION_TIMEOUT_SECONDS if platform == "instagram" else EXTRACTION_TIMEOUT_SECONDS
 
     try:
         # Pass current env to subprocess so it inherits PATH

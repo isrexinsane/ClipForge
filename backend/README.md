@@ -33,7 +33,7 @@ Expected response:
 {
   "status": "ok",
   "yt_dlp_version": "2026.3.17",
-  "supported_platforms": ["twitter", "instagram", "reddit", "tiktok", "twitch"],
+  "supported_platforms": ["twitter", "instagram", "tiktok", "twitch"],
   "uptime_seconds": 5
 }
 ```

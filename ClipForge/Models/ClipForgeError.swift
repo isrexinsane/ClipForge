@@ -83,7 +83,7 @@ enum ClipForgeError: Error, LocalizedError, Sendable {
             return "That doesn't look like a valid link. Please paste a link from a supported platform."
 
         case .unsupportedPlatform(let host):
-            return "\(host) isn't supported yet. ClipForge works with Twitter/X, Instagram, Reddit, TikTok, and Twitch."
+            return "\(host) isn't supported yet. ClipForge works with Twitter/X, Instagram, TikTok, and Twitch."
 
         case .videoTooLong:
             return "That video is too long. ClipForge supports videos up to 60 seconds."

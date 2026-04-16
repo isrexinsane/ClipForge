@@ -43,11 +43,6 @@ _HOST_TO_PLATFORM: dict[str, str] = {
     # Instagram
     "instagram.com": "instagram",
     "www.instagram.com": "instagram",
-    # Reddit
-    "reddit.com": "reddit",
-    "www.reddit.com": "reddit",
-    "old.reddit.com": "reddit",
-    "v.redd.it": "reddit",
     # TikTok
     "tiktok.com": "tiktok",
     "www.tiktok.com": "tiktok",
@@ -64,6 +59,15 @@ _YOUTUBE_HOSTS: set[str] = {
     "www.youtube.com",
     "m.youtube.com",
     "youtu.be",
+}
+
+# Reddit domains — removed from MVP. Extraction unreliable via proxy.
+_REDDIT_HOSTS: set[str] = {
+    "reddit.com",
+    "www.reddit.com",
+    "old.reddit.com",
+    "v.redd.it",
+    "m.reddit.com",
 }
 
 # Tracking parameters to strip from all URLs.
@@ -95,10 +99,6 @@ _PATH_PATTERNS: dict[str, list[re.Pattern[str]]] = {
         re.compile(r"^/reel/[^/]+"),
         re.compile(r"^/p/[^/]+"),
     ],
-    # Reddit: any path containing /comments/ — v.redd.it links bypass path check
-    "reddit": [
-        re.compile(r"/comments/"),
-    ],
     # TikTok: /@username/video/1234567890 — vm.tiktok.com short links bypass path check
     "tiktok": [
         re.compile(r"^/@[^/]+/video/\d+"),
@@ -111,7 +111,6 @@ _PATH_PATTERNS: dict[str, list[re.Pattern[str]]] = {
 
 # Hosts where path validation is skipped (short links, direct video hosts).
 _PATH_BYPASS_HOSTS: set[str] = {
-    "v.redd.it",
     "vm.tiktok.com",
     "clips.twitch.tv",
 }
@@ -157,6 +156,9 @@ def validate_url(url: str) -> ValidatedURL:
 
     # --- Platform detection ---
     if host in _YOUTUBE_HOSTS:
+        raise UnsupportedPlatformError(original_url, host)
+
+    if host in _REDDIT_HOSTS:
         raise UnsupportedPlatformError(original_url, host)
 
     platform = _HOST_TO_PLATFORM.get(host)

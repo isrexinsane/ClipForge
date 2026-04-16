@@ -38,13 +38,6 @@ class TestValidURLs:
         assert result.platform == "instagram"
         assert "/reel/" in result.url
 
-    def test_reddit_comments_url(self) -> None:
-        result = validate_url(
-            "https://www.reddit.com/r/funny/comments/abc123/some_title/"
-        )
-        assert result.platform == "reddit"
-        assert "/comments/" in result.url
-
     def test_tiktok_video_url(self) -> None:
         result = validate_url(
             "https://www.tiktok.com/@username/video/7123456789012345678"
@@ -76,6 +69,24 @@ class TestYouTubeRejection:
     def test_youtu_be_short_link_rejected(self) -> None:
         with pytest.raises(UnsupportedPlatformError):
             validate_url("https://youtu.be/dQw4w9WgXcQ")
+
+
+# -----------------------------------------------------------------------
+# Reddit rejection
+# -----------------------------------------------------------------------
+
+
+class TestRedditRejection:
+    """Reddit URLs must be explicitly rejected with UnsupportedPlatformError."""
+
+    def test_reddit_url_rejected(self) -> None:
+        with pytest.raises(UnsupportedPlatformError) as exc_info:
+            validate_url("https://www.reddit.com/r/funny/comments/abc123/some_title/")
+        assert "reddit.com" in str(exc_info.value)
+
+    def test_vredd_it_rejected(self) -> None:
+        with pytest.raises(UnsupportedPlatformError):
+            validate_url("https://v.redd.it/abc123def")
 
 
 # -----------------------------------------------------------------------
@@ -115,9 +126,9 @@ class TestTrackingParamStripping:
         assert "s=" not in result.url
 
     def test_essential_params_preserved(self) -> None:
-        url = "https://www.reddit.com/r/sub/comments/abc/title/?context=3&utm_source=share"
+        url = "https://www.tiktok.com/@user/video/1234567890?is_from_webapp=1&utm_source=share"
         result = validate_url(url)
-        assert "context=3" in result.url
+        assert "is_from_webapp=1" in result.url
         assert "utm_source" not in result.url
 
 
@@ -139,11 +150,6 @@ class TestInvalidContentPaths:
             validate_url("https://www.instagram.com/username/")
         assert exc_info.value.platform == "instagram"
 
-    def test_reddit_subreddit_page(self) -> None:
-        with pytest.raises(InvalidContentPathError) as exc_info:
-            validate_url("https://www.reddit.com/r/funny/")
-        assert exc_info.value.platform == "reddit"
-
     def test_tiktok_profile_page(self) -> None:
         with pytest.raises(InvalidContentPathError) as exc_info:
             validate_url("https://www.tiktok.com/@username")
@@ -161,11 +167,7 @@ class TestInvalidContentPaths:
 
 
 class TestPathBypassHosts:
-    """Hosts like v.redd.it and vm.tiktok.com skip path validation."""
-
-    def test_vredd_it_direct_link(self) -> None:
-        result = validate_url("https://v.redd.it/abc123def")
-        assert result.platform == "reddit"
+    """Hosts like vm.tiktok.com and clips.twitch.tv skip path validation."""
 
     def test_vm_tiktok_short_link(self) -> None:
         result = validate_url("https://vm.tiktok.com/ZMxxxxxxx/")

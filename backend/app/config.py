@@ -29,7 +29,6 @@ PORT: int = int(os.environ.get("PORT", "8000"))
 SUPPORTED_PLATFORMS: list[str] = [
     "twitter",
     "instagram",
-    "reddit",
     "tiktok",
     "twitch",
 ]
