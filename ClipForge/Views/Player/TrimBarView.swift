@@ -20,11 +20,20 @@ struct TrimBarView: View {
     @ObservedObject var playerManager: VideoPlayerManager
     @ObservedObject var filmstripGenerator: FilmstripGenerator
 
+    /// Whether each handle is currently being dragged (for visual feedback).
+    @State private var isDraggingStart = false
+    @State private var isDraggingEnd = false
+
+    /// Throttle: last time a seek was issued during drag.
+    @State private var lastSeekTime: Date = .distantPast
+
     private let barHeight: CGFloat = 56
     private let playButtonWidth: CGFloat = 50
     private let handleWidth: CGFloat = 16
     private let playheadWidth: CGFloat = 3
     private let borderWidth: CGFloat = 2.5
+    /// Minimum invisible hit area per Apple HIG (44×44pt).
+    private let minHitArea: CGFloat = 44
 
     var body: some View {
         GeometryReader { geometry in
@@ -162,29 +171,65 @@ struct TrimBarView: View {
         let time = isLeading ? trimViewModel.startTime : trimViewModel.endTime
         let xPosition = timeToPosition(time, filmstripWidth: filmstripWidth, videoDuration: videoDuration)
         let handleOffset = isLeading ? xPosition : xPosition - handleWidth
+        let isDragging = isLeading ? isDraggingStart : isDraggingEnd
 
         return Rectangle()
-            .fill(Color.white.opacity(0.3))
+            .fill(isDragging ? DesignTokens.vermillion.opacity(0.85) : Color.white.opacity(0.3))
             .frame(width: handleWidth, height: barHeight)
             .overlay(
                 Image(systemName: isLeading ? "chevron.compact.left" : "chevron.compact.right")
                     .font(.system(size: 14, weight: .bold))
                     .foregroundStyle(.white)
             )
-            .contentShape(Rectangle().size(width: handleWidth + 20, height: barHeight))
-            .offset(x: handleOffset)
+            .scaleEffect(isDragging ? 1.15 : 1.0)
+            .animation(.spring(response: 0.2, dampingFraction: 0.6), value: isDragging)
+            // 44pt-wide invisible hit area centered on the visible handle
+            .padding(.horizontal, (minHitArea - handleWidth) / 2)
+            .contentShape(Rectangle())
+            .offset(x: handleOffset - (minHitArea - handleWidth) / 2)
             .gesture(
-                DragGesture(minimumDistance: 0)
+                DragGesture(minimumDistance: 1)
                     .onChanged { value in
+                        // Update dragging flag
+                        if isLeading { isDraggingStart = true } else { isDraggingEnd = true }
+
+                        // Map drag position to time
                         let dragX = value.location.x + handleOffset
-                        let time = positionToTime(dragX, filmstripWidth: filmstripWidth, videoDuration: videoDuration)
+                        let newTime = positionToTime(dragX, filmstripWidth: filmstripWidth, videoDuration: videoDuration)
+
                         if isLeading {
-                            trimViewModel.updateStartTime(time)
-                            trimViewModel.seekToStart()
+                            trimViewModel.updateStartTime(newTime)
                         } else {
-                            trimViewModel.updateEndTime(time)
-                            trimViewModel.seekToEnd()
+                            trimViewModel.updateEndTime(newTime)
                         }
+
+                        // Throttle seeks to every 0.1s to avoid overwhelming AVPlayer
+                        let now = Date()
+                        if now.timeIntervalSince(lastSeekTime) > 0.1 {
+                            if isLeading {
+                                trimViewModel.seekToStart()
+                            } else {
+                                trimViewModel.seekToEnd()
+                            }
+                            lastSeekTime = now
+                        }
+                    }
+                    .onEnded { value in
+                        // Final seek to the exact position
+                        let dragX = value.location.x + handleOffset
+                        let newTime = positionToTime(dragX, filmstripWidth: filmstripWidth, videoDuration: videoDuration)
+
+                        if isLeading {
+                            trimViewModel.updateStartTime(newTime)
+                            trimViewModel.seekToStart()
+                            isDraggingStart = false
+                        } else {
+                            trimViewModel.updateEndTime(newTime)
+                            trimViewModel.seekToEnd()
+                            isDraggingEnd = false
+                        }
+
+                        lastSeekTime = .distantPast
                     }
             )
     }
