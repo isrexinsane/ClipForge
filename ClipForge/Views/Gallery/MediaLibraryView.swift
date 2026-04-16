@@ -26,6 +26,7 @@ struct MediaLibraryView: View {
     @State private var shareItems: [Any] = []
     @State private var showShareSheet = false
     @State private var showShareError = false
+    @State private var isLoadingShare = false
 
     var body: some View {
         // Background gradient handled by ContentView — this view is transparent.
@@ -142,8 +143,17 @@ struct MediaLibraryView: View {
     /// (including animation frames), unlike PHImageManager which may
     /// return a single-frame image representation.
     private func fetchAndShare(identifier: String) {
+        // Prevent double-tap while already loading
+        guard !isLoadingShare else { return }
+        isLoadingShare = true
+
+        // Reset previous share state
+        shareItems = []
+        showShareSheet = false
+
         let results = PHAsset.fetchAssets(withLocalIdentifiers: [identifier], options: nil)
         guard let asset = results.firstObject else {
+            isLoadingShare = false
             showShareError = true
             return
         }
@@ -153,6 +163,7 @@ struct MediaLibraryView: View {
         guard let gifResource = resources.first(where: {
             $0.uniformTypeIdentifier == "com.compuserve.gif"
         }) ?? resources.first else {
+            isLoadingShare = false
             showShareError = true
             return
         }
@@ -170,6 +181,7 @@ struct MediaLibraryView: View {
             },
             completionHandler: { error in
                 Task { @MainActor in
+                    isLoadingShare = false
                     if error == nil, !gifData.isEmpty {
                         shareItems = [gifData]
                         showShareSheet = true
@@ -251,7 +263,7 @@ struct GIFGlassCard: View {
             .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 4)
         }
         .buttonStyle(.plain)
-        .task {
+        .task(id: entry.localAssetIdentifier) {
             await loadThumbnail()
         }
     }

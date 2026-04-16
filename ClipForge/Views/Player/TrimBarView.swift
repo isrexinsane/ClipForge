@@ -24,6 +24,10 @@ struct TrimBarView: View {
     @State private var isDraggingStart = false
     @State private var isDraggingEnd = false
 
+    /// Captured handle time at drag start — translation is applied relative to this.
+    @State private var dragStartAnchor: Double?
+    @State private var dragEndAnchor: Double?
+
     /// Throttle: last time a seek was issued during drag.
     @State private var lastSeekTime: Date = .distantPast
 
@@ -193,9 +197,17 @@ struct TrimBarView: View {
                         // Update dragging flag
                         if isLeading { isDraggingStart = true } else { isDraggingEnd = true }
 
-                        // Map drag position to time
-                        let dragX = value.location.x + handleOffset
-                        let newTime = positionToTime(dragX, filmstripWidth: filmstripWidth, videoDuration: videoDuration)
+                        // Capture the handle's time at drag start (first onChanged call)
+                        if isLeading {
+                            if dragStartAnchor == nil { dragStartAnchor = trimViewModel.startTime }
+                        } else {
+                            if dragEndAnchor == nil { dragEndAnchor = trimViewModel.endTime }
+                        }
+
+                        // Convert pixel translation to time delta, then apply to anchor
+                        let anchor = isLeading ? (dragStartAnchor ?? 0) : (dragEndAnchor ?? 0)
+                        let timeDelta = (value.translation.width / filmstripWidth) * videoDuration
+                        let newTime = anchor + timeDelta
 
                         if isLeading {
                             trimViewModel.updateStartTime(newTime)
@@ -214,19 +226,16 @@ struct TrimBarView: View {
                             lastSeekTime = now
                         }
                     }
-                    .onEnded { value in
-                        // Final seek to the exact position
-                        let dragX = value.location.x + handleOffset
-                        let newTime = positionToTime(dragX, filmstripWidth: filmstripWidth, videoDuration: videoDuration)
-
+                    .onEnded { _ in
+                        // Final seek to the committed position
                         if isLeading {
-                            trimViewModel.updateStartTime(newTime)
                             trimViewModel.seekToStart()
                             isDraggingStart = false
+                            dragStartAnchor = nil
                         } else {
-                            trimViewModel.updateEndTime(newTime)
                             trimViewModel.seekToEnd()
                             isDraggingEnd = false
+                            dragEndAnchor = nil
                         }
 
                         lastSeekTime = .distantPast
@@ -255,7 +264,9 @@ struct TrimBarView: View {
         .gesture(
             DragGesture(minimumDistance: 0)
                 .onChanged { value in
-                    let dragX = value.location.x + xPosition - playheadWidth / 2
+                    // Use startLocation for initial tap, then translation for movement
+                    let startX = timeToPosition(playerManager.currentTime, filmstripWidth: filmstripWidth, videoDuration: videoDuration)
+                    let dragX = startX + value.translation.width
                     let time = positionToTime(dragX, filmstripWidth: filmstripWidth, videoDuration: videoDuration)
                     let clampedTime = min(max(time, 0), videoDuration)
                     let cmTime = CMTime(seconds: clampedTime, preferredTimescale: 600)
