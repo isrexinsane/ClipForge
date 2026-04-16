@@ -115,6 +115,27 @@ def _build_cookie_args(platform: str) -> list[str]:
     return []
 
 
+def _build_instagram_codec_args(platform: str) -> list[str]:
+    """Build codec preference args for Instagram extractions.
+
+    Instagram often returns HEVC (H.265) video, which causes playback
+    issues in iOS Simulator and may cause GIF encoding failures.
+    These args tell yt-dlp to prefer H.264 streams and, as a fallback,
+    transcode to H.264 MP4 server-side if no native H.264 stream exists.
+
+    Only applied to Instagram — other platforms return H.264 natively.
+
+    Args:
+        platform: The detected platform name.
+
+    Returns:
+        ["-S", "vcodec:h264", "--recode-video", "mp4"] for Instagram, else [].
+    """
+    if platform == "instagram":
+        return ["-S", "vcodec:h264", "--recode-video", "mp4"]
+    return []
+
+
 def is_proxy_configured() -> bool:
     """Check whether a yt-dlp proxy is configured via environment variable."""
     return bool(os.environ.get("YTDLP_PROXY"))
@@ -185,6 +206,7 @@ async def extract_video(url: str, platform: str) -> ExtractionResult:
         "--no-write-playlist-metafiles",
         *_build_proxy_args(),
         *_build_cookie_args(platform),
+        *_build_instagram_codec_args(platform),
         url,
     ]
 
