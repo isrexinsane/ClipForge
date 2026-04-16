@@ -2,7 +2,7 @@
 title: "CLAUDE.md — ClipForge Master Context"
 project: ClipForge
 type: master-context
-version: 1.3
+version: 1.4
 date: 2026-04-15
 status: active
 bmad_phase: "Phase 4 — Validation & Sharding (Complete)"
@@ -426,7 +426,7 @@ Confirmed design decisions that update or override original BMAD artifacts. Each
 | 2026-04-15 | **EXTRACT-CONFIG RESOLVED.** IPRoyal residential proxy + Instagram cookies + Reddit timeout extension + yt-dlp nightly + MP4 format preference. | Datacenter IPs blocked by all social platforms. Residential proxy + platform-specific configs resolve 3/5 platforms. | Backend (Railway env vars), Master_Session_Handoff_2026-04-15.md |
 | 2026-04-15 | **FreemiumGatekeeper service.** UserDefaults-backed daily counter with midnight reset. `@MainActor` singleton, `canExport` / `remainingExports` computed properties. | Enforces 1/day free limit. Premium bypass via `isPremium` flag synced from SubscriptionManager. | Developer (Epic 7) |
 | 2026-04-15 | **Watermark: monospace text treatment.** "CLIPFORGE" rendered via CoreGraphics at 50% opacity, white with black shadow, bottom-right. Free tier only. | Placeholder until final logomark branding. `applyWatermark(to:)` method in GIFEncoder. Skipped when `isPremium = true`. | Developer (Epic 7) |
-| 2026-04-15 | **Subscription presentation DEFERRED.** SubscriptionView cannot compile inside `.sheet` on TrimModalView (SwiftUI type-checker cascade). Upgrade button stubbed with `print("TODO")`. | Five successive fix attempts failed. Root cause: TrimModalView body complexity exceeds Swift type-checker limits when adding another `.sheet` modifier chain. Needs separate wrapper view approach. | Developer (Epic 8) |
+| 2026-04-15 | **Subscription presentation RESOLVED.** SubscriptionView renamed to UpgradeView (naming collision with SwiftUI.SubscriptionView caused type-checker cascade). SubscriptionRouter singleton replaces NotificationCenter. RootView wrapper presents UpgradeView via `.fullScreenCover`. | Root cause was naming collision, not body complexity. SwiftUI.SubscriptionView expects `content/publisher/action` params — Swift tried matching that overload instead of our custom view. Renaming + SubscriptionRouter (@Published bool) + RootView wrapper solved it cleanly. | Developer (Epic 8) |
 | 2026-04-15 | **App launch entitlement check.** `SubscriptionManager.shared.checkEntitlements()` called in `.task` on ContentView. | Syncs premium status from iCloud/StoreKit on every app launch. Handles cross-device purchases and subscription renewals/expirations. | Developer (Epic 8) |
 
 ---
@@ -462,12 +462,11 @@ Status: IN PROGRESS — EXTRACT-CONFIG resolved, Epics 7–8 code complete, plat
 
 ### Next Actions
 
-1. Fix SUBSCRIPTION-PRESENTATION — Wire SubscriptionView from TrimModalView via separate wrapper view
-2. Fix INSTAGRAM-CODEC — Add `--recode-video mp4` / `-S vcodec:h264` for Instagram extractions
-3. Investigate TIKTOK-FIX — TikTok returns 403 even through proxy; may need cookies or browser headers
-4. Stage 3 Mega-Checkpoint — Full end-to-end GIF creation test on working platforms (Twitter, Twitch, Reddit)
-5. PO Full Validation — Cross-reference PRD F-01 through F-08 against implemented code
-6. Stage 5 — Epics 9–11 (Onboarding, visual polish, App Store submission)
+1. Fix INSTAGRAM-CODEC — Add `--recode-video mp4` / `-S vcodec:h264` for Instagram extractions
+2. Investigate TIKTOK-FIX — TikTok returns 403 even through proxy; may need cookies or browser headers
+3. Stage 3 Mega-Checkpoint — Full end-to-end GIF creation test on working platforms (Twitter, Twitch, Reddit)
+4. PO Full Validation — Cross-reference PRD F-01 through F-08 against implemented code
+5. Stage 5 — Epics 10–11 (Visual polish, App Store submission). Epic 9 (Onboarding) complete.
 
 ### Completed Stories
 
@@ -501,7 +500,7 @@ Status: IN PROGRESS — EXTRACT-CONFIG resolved, Epics 7–8 code complete, plat
 | STORY-7.3 | Epic 7: Freemium Gating | CREATE Button Freemium Gate in TrimModalView | ✅ Complete | 2026-04-15 |
 | STORY-7.4 | Epic 7: Freemium Gating | Export Counter Display on Success State | ✅ Complete | 2026-04-15 |
 | STORY-8.1 | Epic 8: StoreKit 2 Subscription | SubscriptionManager — StoreKit 2 Service | ✅ Complete | 2026-04-15 |
-| STORY-8.2 | Epic 8: StoreKit 2 Subscription | SubscriptionView — Purchase Screen (minimal) | ✅ Complete | 2026-04-15 |
+| STORY-8.2 | Epic 8: StoreKit 2 Subscription | UpgradeView — Purchase Screen (renamed from SubscriptionView) | ✅ Complete | 2026-04-15 |
 | STORY-8.3 | Epic 8: StoreKit 2 Subscription | App Launch Entitlement Check + Menu Restore | ✅ Complete | 2026-04-15 |
 | STORY-8.4 | Epic 8: StoreKit 2 Subscription | Menu Button Integration (HomeView) | ✅ Complete | 2026-04-15 |
 
@@ -510,7 +509,7 @@ Status: IN PROGRESS — EXTRACT-CONFIG resolved, Epics 7–8 code complete, plat
 | Item | Priority | Status | Description |
 |------|----------|--------|-------------|
 | EXTRACT-CONFIG | CRITICAL | ✅ Resolved | Resolved 2026-04-15. IPRoyal residential proxy, Instagram cookies, Reddit timeout, yt-dlp nightly, MP4 format preference. See Master_Session_Handoff_2026-04-15.md §4. |
-| SUBSCRIPTION-PRESENTATION | Medium | Open | SubscriptionView cannot compile inside `.sheet` on TrimModalView (SwiftUI type-checker cascade). Upgrade button stubbed. Needs wrapper view or alternative presentation. |
+| SUBSCRIPTION-PRESENTATION | Medium | ✅ Resolved | Resolved 2026-04-15. Root cause: custom SubscriptionView name collided with SwiftUI.SubscriptionView, causing type-checker cascade. Fix: renamed to UpgradeView, replaced NotificationCenter with SubscriptionRouter singleton (@Published bool), presentation via RootView wrapper. |
 | TIKTOK-FIX | Medium | Open | TikTok returns 403 even through residential proxy. Needs cookies, browser headers, or `--extractor-args` investigation. |
 | INSTAGRAM-CODEC | Medium | Open | Instagram returns HEVC (H.265) video. Add `--recode-video mp4` or `-S vcodec:h264` for Instagram-specific extractions. |
 | MEDIA-LIBRARY-LAYOUT | Low | Open | Media Library grid needs visual polish — spacing, empty state, thumbnail sizing. Epic 10 scope. |
@@ -524,7 +523,9 @@ Status: IN PROGRESS — EXTRACT-CONFIG resolved, Epics 7–8 code complete, plat
 |------|-------|--------|-------|
 | 2026-04-11 | Sprint 1 Backend Smoke Test | 11/11 PASS | Health, auth, validation all correct. Extractions return proper 502s due to datacenter IP blocking (infrastructure, not code). Full report in project chat history. |
 | 2026-04-15 | EXTRACT-CONFIG Resolution | RESOLVED | IPRoyal proxy configured. Twitter ✅, Twitch ✅, Instagram ⚠️ (HEVC codec), Reddit ⚠️ (transient timeout), TikTok ❌ (upstream 403), YouTube ✅ (correctly rejected). |
-| 2026-04-15 | Epics 7–8 Code Review | CODE COMPLETE | FreemiumGatekeeper, watermark, gate, counter, SubscriptionManager, SubscriptionView (minimal), entitlement check, menu integration. Subscription presentation deferred (type-checker issue). |
+| 2026-04-15 | Epics 7–8 Code Review | CODE COMPLETE | FreemiumGatekeeper, watermark, gate, counter, SubscriptionManager, UpgradeView, entitlement check, menu integration. |
+| 2026-04-15 | SUBSCRIPTION-PRESENTATION Fix | ✅ RESOLVED | Root cause: naming collision with SwiftUI.SubscriptionView. Fix: renamed to UpgradeView + SubscriptionRouter singleton + RootView wrapper. Build succeeds, subscription presentation functional. |
+| 2026-04-15 | Epic 9 Onboarding | CODE COMPLETE | OnboardingView with 3-page TabView, @AppStorage flag, fullScreenCover from ContentView. Skip + Get Started dismiss via @Environment(\.dismiss). |
 
 ---
 
@@ -533,7 +534,7 @@ Status: IN PROGRESS — EXTRACT-CONFIG resolved, Epics 7–8 code complete, plat
 | File | Purpose | Status |
 |------|---------|--------|
 | `ClipForge_Feasibility_Report.docx` | Canonical feasibility analysis. Source of truth for all strategic decisions. | ✅ Complete (Chat only) |
-| `CLAUDE.md` (this file) | Master project context. First file read by any Claude instance. | ✅ v1.3 |
+| `CLAUDE.md` (this file) | Master project context. First file read by any Claude instance. | ✅ v1.4 |
 | `Project_Brief.md` | Market opportunity validation, competitive landscape, user personas, value proposition. Analyst agent output. | ✅ Complete (Chat only) |
 | `PRD.md` | Product Requirements Document. Features, user flows, acceptance criteria, MVP scope, non-functional requirements, success metrics. PM agent output. | ✅ Complete |
 | `Architecture_Spec.md` | Full architecture specification. System design, MVVM pattern, data flow, performance architecture, security considerations. Architect agent output. | ✅ Complete |
@@ -581,3 +582,5 @@ These decisions have been made and documented. They should not be revisited with
 | Tab bar | Removed — swipe navigation with CAVA-style page dots | Horizontal swipe between Home and Gallery, animated dot indicator | Design_Decisions §2.4 |
 | User accounts | None — StoreKit 2 binds to iCloud account | Zero data collection, no login UI | Design_Decisions §2.7 |
 | Home screen | Single CTA button with auto clipboard detection | No text field, no paste UI — button state changes when supported URL detected | Design_Decisions §2.2 |
+| Subscription routing | SubscriptionRouter singleton (@Published bool) + RootView wrapper | TrimModalView sets `SubscriptionRouter.shared.showSubscription = true`, RootView observes via @StateObject and presents .fullScreenCover. Avoids type-checker cascade in complex view bodies. | Developer (Epic 8) |
+| UpgradeView naming | Renamed from SubscriptionView to UpgradeView | SwiftUI.SubscriptionView (StoreKit) expects content/publisher/action params. Custom view with same name caused type-checker collision. | Developer (Epic 8) |
