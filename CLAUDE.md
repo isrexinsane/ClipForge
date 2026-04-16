@@ -2,10 +2,10 @@
 title: "CLAUDE.md — ClipForge Master Context"
 project: ClipForge
 type: master-context
-version: 1.4
-date: 2026-04-15
+version: 1.5
+date: 2026-04-16
 status: active
-bmad_phase: "Phase 4 — Validation & Sharding (Complete)"
+bmad_phase: "Phase 10 — Complete. Phase 11 — TestFlight (pending branding)"
 tags: [clipforge, bmad, ios, gif, master-context]
 ---
 
@@ -431,6 +431,14 @@ Confirmed design decisions that update or override original BMAD artifacts. Each
 | 2026-04-16 | **INSTAGRAM-CODEC RESOLVED.** `_build_instagram_codec_args()` adds `-S vcodec:h264` + `--recode-video mp4` for Instagram URLs only. | Instagram returns HEVC (H.265) which causes iOS Simulator playback failures and potential GIF encoding issues. H.264 preference + server-side transcode fallback guarantees compatibility. | Backend (extraction.py) |
 | 2026-04-16 | **API key secured via xcconfig.** Hardcoded key removed from Configuration.swift. Reads from Info.plist `$(CLIPFORGE_API_KEY)` → `Secrets.xcconfig` (gitignored). | Prevents API key from being committed to git. Standard iOS pattern for secret management. | Developer (Epic 10) |
 | 2026-04-16 | **SubscriptionRouter @MainActor.** Added `@MainActor` isolation to match other singleton services. | Resolved the only Swift concurrency warning in the project. Zero-warning build confirmed. | Developer (Epic 10) |
+| 2026-04-16 | **Trim handle drag: translation-based.** Replaced `value.location.x` with `value.translation.width` + anchor capture pattern for both trim handles and playhead. | `location.x` gives absolute position within gesture coordinate space — shifts depending on where within the 44pt handle the user taps. `translation.width` gives delta from drag start, which is correct for proportional time mapping. | Developer (Bug Fix) |
+| 2026-04-16 | **Gallery thumbnail `.task(id:)`.** Changed `.task { await loadThumbnail() }` to `.task(id: entry.localAssetIdentifier)` on GIFGlassCard. | Plain `.task` only fires once when view first appears. When SwiftUI reuses the view for a different entry (cell recycling in LazyVGrid), the thumbnail never reloads. `task(id:)` re-fires when the identity changes. | Developer (Bug Fix) |
+| 2026-04-16 | **Share sheet load guard.** Added `isLoadingShare` boolean gate and explicit reset of `shareItems`/`showShareSheet` before each `fetchAndShare` call. | Prevents race condition where stale share data from a previous tap causes blank sheet on first tap. PHAssetResourceManager fetch is async — sheet must only present after data arrives. | Developer (Bug Fix) |
+| 2026-04-16 | **Debug print gating.** All 28 ungated `print()` calls across 5 service files wrapped in `#if DEBUG` / `#endif`. | Release builds must not emit debug logging. App Store review can flag console noise. Pre-flight scan requirement. | Developer (Epic 10) |
+| 2026-04-16 | **Full-bleed gradient behind Dynamic Island.** Background gradient moved from HomeView to ContentView with `.ignoresSafeArea()`. | Gradient now extends behind the Dynamic Island notch area, matching native iOS apps. Previously stopped at safe area inset. | Developer (Epic 10) |
+| 2026-04-16 | **CAVA morphing page indicator.** Custom animated dot indicator replaces static page dots. Active dot morphs wider (pill shape), inactive shrinks. Uses `withAnimation(.spring())`. | Matches the motion-forward design language. Standard PageTabViewStyle dots are too plain and not brand-aligned. | Developer (Epic 10) |
+| 2026-04-16 | **Masonry gallery grid.** Unified 9-slot grid: actual GIFs fill from newest-first, remaining slots show Liquid Glass placeholder cards. | Consistent visual rhythm even with few GIFs. Placeholders communicate "more space here" without feeling empty. | Developer (Epic 10) |
+| 2026-04-16 | **CTA breathing glow.** Vermillion shadow pulses with `repeatForever(autoreverses: true)` animation on idle CTA button. | Draws attention to the primary action. Subtle enough to not be distracting, distinct enough to feel alive. | Developer (Epic 10) |
 
 ---
 
@@ -441,8 +449,10 @@ This section tracks the current state of the BMAD pipeline. Update it after ever
 ### Current Phase
 
 ```
-PHASE 10 — INTEGRATION & POLISH (SM/Dev/QA)
-Status: IN PROGRESS — EXTRACT-CONFIG resolved, INSTAGRAM-CODEC resolved, Epics 7–8 code complete, concurrency warnings cleared, platform testing partial (4/5 — TikTok outstanding)
+PHASE 11 — TESTFLIGHT PREPARATION
+Status: BLOCKED — Awaiting brand identity (app name, icon, watermark) before archive
+Pre-flight scan: PASSED (28 print() gated, no banned words, signing valid, bundle ID registered)
+App Store Connect: "ClipForge - GIF Maker" created (placeholder name)
 ```
 
 ### Phase History
@@ -459,16 +469,18 @@ Status: IN PROGRESS — EXTRACT-CONFIG resolved, INSTAGRAM-CODEC resolved, Epics
 | Phase 7: Video Import Flow (SM/Dev/QA) | ✅ Complete | 2026-04-12 | Epic 3: 5 stories (STORY-009 through STORY-013). APIService, ClipboardMonitor, HomeViewModel, CTA progress ring, VideoPlayerManager + Trim Modal shell. |
 | Phase 8: Trim Interface (SM/Dev/QA) | ✅ Complete | 2026-04-12 | Epic 4: 5 stories (STORY-014 through STORY-018). TrimViewModel, FilmstripGenerator, TrimBarView, Duration Readout, CREATE button, font setup. |
 | Phase 9: GIF Engine + Export (SM/Dev/QA) | ✅ Complete | 2026-04-12 | Epics 5+6: 5 stories (STORY-019 through STORY-023). GIFEncoder, ExportViewModel, ExportManager (PHPhotoLibrary), export success UI, ShareSheet, Media Library grid. |
-| Phase 10: Integration & Polish (SM/Dev/QA) | 🔄 In Progress | — | EXTRACT-CONFIG resolved. INSTAGRAM-CODEC resolved (H.264 forced). Epics 7–8 code complete. Concurrency warnings cleared. API key secured via xcconfig. Platform testing: Twitter ✅, Twitch ✅, Instagram ✅ (H.264), Reddit ⚠️ (timeout), TikTok ❌ (403). |
-| Phase 11: TestFlight Beta (Human) | ⬜ Not Started | — | Beta builds, bug fixes |
+| Phase 10: Integration & Polish (SM/Dev/QA) | ✅ Complete | 2026-04-16 | Figma-exact design system, glass CTA, morphing indicator, trim handle fix, gallery masonry, share sheet fix, full-bleed gradient. Instagram codec fix (H.264). API key secured via xcconfig. Concurrency warnings cleared. Pre-flight scan passed. Real device testing passed. |
+| Phase 11: TestFlight Preparation (Human) | 🔄 In Progress | — | BLOCKED on brand identity (app icon, final watermark). Pre-flight scan passed. App Store Connect placeholder created. |
 | Phase 12: App Store Submission (Human) | ⬜ Not Started | — | Listing, screenshots, submission |
 
 ### Next Actions
 
-1. Investigate TIKTOK-FIX — TikTok returns 403 even through proxy; may need cookies or browser headers
-2. Stage 3 Mega-Checkpoint — Full end-to-end GIF creation test on working platforms (Twitter, Twitch, Instagram, Reddit)
-3. PO Full Validation — Cross-reference PRD F-01 through F-08 against implemented code
-4. Stage 5 — Epics 10–11 (Visual polish, App Store submission). Epic 9 (Onboarding) complete.
+1. **BLOCKER: Brand Identity** — App icon asset needed before TestFlight archive. Rex + Neb collaboration.
+2. **TIKTOK-FIX** — TikTok returns 403 even through residential proxy. Deferred to post-launch (4/5 platforms working).
+3. **Font Cleanup** — Delete 30 unused .ttf files from Xcode project (Rex: terminal command provided).
+4. **Bug Fix Commit** — Build, verify, and commit trim handle + gallery fixes (TrimBarView.swift, MediaLibraryView.swift).
+5. **Print Gating Commit** — Build, verify, and commit #if DEBUG changes across 5 service files.
+6. **TestFlight Archive** — After brand assets land, archive and upload first beta build.
 
 ### Completed Stories
 
@@ -518,6 +530,12 @@ Status: IN PROGRESS — EXTRACT-CONFIG resolved, INSTAGRAM-CODEC resolved, Epics
 | AUTH-FIX | Low | Open | FastAPI returns 422 for missing API key header; API Contract §4 specifies 401. Minor backend middleware fix. |
 | Concurrency Warnings | Low | ✅ Resolved | Resolved 2026-04-16. Only 1 actual warning: SubscriptionRouter.shared missing `@MainActor`. Added `@MainActor` to class. Zero warnings confirmed on rebuild. |
 | Visual Polish | Medium | ✅ Resolved | Resolved 2026-04-16. Background gradient moved to ContentView (full bleed behind Dynamic Island), CAVA morphing page indicator, trim handle 44pt touch targets + drag feedback, CTA breathing glow, unified masonry gallery. |
+| Trim Handle Jumping | High | ✅ Resolved | Resolved 2026-04-16. Root cause: `value.location.x` gives absolute position, shifts based on tap point within handle. Fix: capture anchor time on drag start, use `value.translation.width` for delta. |
+| Gallery Thumbnail Loading | Medium | ✅ Resolved | Resolved 2026-04-16. `.task` only fires once on first appear. Fix: `.task(id: entry.localAssetIdentifier)` re-fires when entry identity changes. |
+| Share Sheet Blank | Medium | ✅ Resolved | Resolved 2026-04-16. Stale state from previous share attempt. Fix: `isLoadingShare` guard, explicit reset of shareItems/showShareSheet before each fetch. |
+| Debug Print Gating | Medium | ✅ Resolved | Resolved 2026-04-16. 28 ungated print() statements across 5 service files wrapped in `#if DEBUG` / `#endif`. Zero debug output in release builds. |
+| Font File Bloat | Low | Open | 30 unused .ttf files in project (only 4 registered in Info.plist). Terminal deletion command provided to Rex. |
+| APP ICON | CRITICAL | Open | **BLOCKER for TestFlight.** No app icon asset yet. Needs Rex + Neb branding collaboration. |
 
 ### QA Audit Log
 
@@ -531,6 +549,8 @@ Status: IN PROGRESS — EXTRACT-CONFIG resolved, INSTAGRAM-CODEC resolved, Epics
 | 2026-04-16 | INSTAGRAM-CODEC Fix | ✅ RESOLVED | Backend: `-S vcodec:h264` + `--recode-video mp4` for Instagram only. Curl test: `video/mp4` response confirmed. Railway auto-deployed from commit 49db2c5. |
 | 2026-04-16 | Concurrency Warnings | ✅ RESOLVED | 1 warning (not 7): SubscriptionRouter.shared missing @MainActor. Fix: added @MainActor to class. Zero-warning build confirmed. |
 | 2026-04-16 | API Key Security | ✅ RESOLVED | Hardcoded key removed from Configuration.swift. Moved to Secrets.xcconfig (gitignored) → Info.plist variable substitution → Bundle.main.infoDictionary at runtime. |
+| 2026-04-16 | Real Device E2E Test | 3 BUGS FOUND, ALL FIXED | Trim handle jumping (translation fix), gallery thumbnail not loading (.task(id:) fix), share sheet blank on first tap (load guard fix). All three root-caused and patched. |
+| 2026-04-16 | Pre-Flight App Store Scan | 7/8 PASS, 1 BLOCKER | Banned words ✅, debug gating ✅ (after fix), Info.plist keys ✅, signing ✅, version/build ✅, deployment target ✅, launch screen ✅. App icon ❌ (BLOCKER — no asset yet). |
 
 ---
 
@@ -539,7 +559,7 @@ Status: IN PROGRESS — EXTRACT-CONFIG resolved, INSTAGRAM-CODEC resolved, Epics
 | File | Purpose | Status |
 |------|---------|--------|
 | `ClipForge_Feasibility_Report.docx` | Canonical feasibility analysis. Source of truth for all strategic decisions. | ✅ Complete (Chat only) |
-| `CLAUDE.md` (this file) | Master project context. First file read by any Claude instance. | ✅ v1.4 |
+| `CLAUDE.md` (this file) | Master project context. First file read by any Claude instance. | ✅ v1.5 |
 | `Project_Brief.md` | Market opportunity validation, competitive landscape, user personas, value proposition. Analyst agent output. | ✅ Complete (Chat only) |
 | `PRD.md` | Product Requirements Document. Features, user flows, acceptance criteria, MVP scope, non-functional requirements, success metrics. PM agent output. | ✅ Complete |
 | `Architecture_Spec.md` | Full architecture specification. System design, MVVM pattern, data flow, performance architecture, security considerations. Architect agent output. | ✅ Complete |
@@ -558,7 +578,8 @@ Status: IN PROGRESS — EXTRACT-CONFIG resolved, INSTAGRAM-CODEC resolved, Epics
 | `APP_STORE_STRATEGY.md` | Operational compliance playbook. Banned terms, required language, review tactics, listing copy templates. | ✅ Complete |
 | `BMAD_LOG.md` | Running log of agent decisions, approvals, and phase transitions. Reverse chronological. | ✅ Active |
 | `Master_Session_Handoff_2026-04-12.md` | Previous handoff. Project state as of first Xcode build. Covers Phase 5 completion through Epics 3–6, build fixes, simulator results. | ✅ Complete (superseded) |
-| `Master_Session_Handoff_2026-04-15.md` | Current handoff. EXTRACT-CONFIG resolution, platform testing, Epics 7–8, backend config reference. Supersedes April 12 handoff. | ✅ Complete |
+| `Master_Session_Handoff_2026-04-15.md` | Previous handoff. EXTRACT-CONFIG resolution, platform testing, Epics 7–8, backend config reference. Superseded by April 16 handoff. | ✅ Complete (superseded) |
+| `Master_Session_Handoff_2026-04-16.md` | Current handoff. Phase 10 completion, Instagram codec fix, real device bug fixes, pre-flight scan, debug gating, visual polish. Supersedes April 15 handoff. | ✅ Complete |
 | `Stage3_Mega_Checkpoint_Test_Plan.md` | End-to-end test plan with actual platform results from April 15 testing session. | ✅ Complete |
 | Karpathy Guidelines (integrated) | Behavioral coding principles for Claude Code sessions. Prevents overcomplication, silent assumptions, orthogonal edits. Source: `github.com/forrestchang/andrej-karpathy-skills` | ✅ Integrated into CLAUDE.md |
 
