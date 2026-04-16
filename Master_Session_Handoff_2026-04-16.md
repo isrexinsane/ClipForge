@@ -269,3 +269,4 @@ ClipForgeApp.swift
 - Backend 422→401 for missing API key
 - StoreKit product configuration in App Store Connect
 - Font bundle cleanup (unused weights)
+- INSTAGRAM-COOKIES-AUTOMATION (HIGH — v1.1): Manual cookie refresh is untenable for production. Current process: export cookies from Chrome, paste into Railway env var. Cookies expire every few weeks. Must automate via headless browser rotation, Instagram API, or managed proxy service. Blocking for any scale beyond personal testing.

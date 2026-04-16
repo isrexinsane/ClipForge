@@ -36,7 +36,7 @@ TEMP_DIR.mkdir(parents=True, exist_ok=True)
 # Instagram needs longer because --recode-video mp4 triggers server-side
 # ffmpeg transcoding from HEVC to H.264.
 EXTRACTION_TIMEOUT_SECONDS: int = 30
-INSTAGRAM_EXTRACTION_TIMEOUT_SECONDS: int = 60
+INSTAGRAM_EXTRACTION_TIMEOUT_SECONDS: int = 90
 
 # Cookie file paths
 COOKIES_FILE = Path("/tmp/clipforge_cookies.txt")
@@ -118,12 +118,17 @@ def _build_cookie_args(platform: str) -> list[str]:
 
 
 def _build_instagram_codec_args(platform: str) -> list[str]:
-    """Build codec preference args for Instagram extractions.
+    """Build forced H.264 transcoding args for Instagram extractions.
 
-    Instagram often returns HEVC (H.265) video, which causes playback
-    issues in iOS Simulator and may cause GIF encoding failures.
-    These args tell yt-dlp to prefer H.264 streams and, as a fallback,
-    transcode to H.264 MP4 server-side if no native H.264 stream exists.
+    Instagram frequently serves HEVC-only Reels with no H.264 stream
+    available. The -S vcodec:h264 preference flag is useless in that case.
+    Instead, we force ffmpeg to transcode to H.264 baseline + AAC audio
+    via --postprocessor-args, which guarantees iOS AVPlayer compatibility
+    regardless of the source codec.
+
+    --recode-video mp4          → triggers ffmpeg post-processing
+    --postprocessor-args        → explicit libx264 + aac + faststart
+    +faststart                  → moves moov atom for streaming playback
 
     Only applied to Instagram — other platforms return H.264 natively.
 
@@ -131,10 +136,14 @@ def _build_instagram_codec_args(platform: str) -> list[str]:
         platform: The detected platform name.
 
     Returns:
-        ["-S", "vcodec:h264", "--recode-video", "mp4"] for Instagram, else [].
+        Transcoding args for Instagram, else [].
     """
     if platform == "instagram":
-        return ["-S", "vcodec:h264", "--recode-video", "mp4"]
+        return [
+            "--recode-video", "mp4",
+            "--postprocessor-args",
+            "ffmpeg:-vcodec libx264 -acodec aac -movflags +faststart",
+        ]
     return []
 
 
@@ -188,7 +197,7 @@ async def extract_video(url: str, platform: str) -> ExtractionResult:
 
     Raises:
         ExtractionError: yt-dlp failed (non-zero exit, no output file).
-        ExtractionTimeout: yt-dlp exceeded the timeout (60s Instagram, 30s others).
+        ExtractionTimeout: yt-dlp exceeded the timeout (90s Instagram, 30s others).
     """
     file_id = str(uuid.uuid4())
     output_template = str(TEMP_DIR / f"{file_id}.%(ext)s")
