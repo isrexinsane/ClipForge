@@ -15,6 +15,7 @@
 
 import SwiftUI
 import Photos
+import PhotosUI
 
 /// Displays a masonry-style 2-column grid of previously created GIFs
 /// with Liquid Glass card styling and opacity fade.
@@ -22,8 +23,9 @@ struct MediaLibraryView: View {
 
     @ObservedObject var historyStore: GIFHistoryStore
 
-    @State private var shareData: Data?
+    @State private var shareItems: [Any] = []
     @State private var showShareSheet = false
+    @State private var showShareError = false
 
     var body: some View {
         // Background gradient handled by ContentView — this view is transparent.
@@ -54,9 +56,12 @@ struct MediaLibraryView: View {
                     .frame(height: DesignTokens.paddingXLarge + DesignTokens.paddingSmall)
             }
         .sheet(isPresented: $showShareSheet) {
-            if let data = shareData {
-                ShareSheet(activityItems: [data])
-            }
+            ShareSheet(activityItems: shareItems)
+        }
+        .alert("GIF Unavailable", isPresented: $showShareError) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("This GIF could not be loaded from your photo library. It may have been deleted.")
         }
     }
 
@@ -217,22 +222,50 @@ struct MediaLibraryView: View {
 
     // MARK: - Fetch & Share
 
+    /// Fetches the original GIF data from the Photos library using
+    /// PHAssetResource, then presents the share sheet.
+    ///
+    /// PHAssetResourceManager preserves the original GIF file bytes
+    /// (including animation frames), unlike PHImageManager which may
+    /// return a single-frame image representation.
     private func fetchAndShare(identifier: String) {
         let results = PHAsset.fetchAssets(withLocalIdentifiers: [identifier], options: nil)
-        guard let asset = results.firstObject else { return }
+        guard let asset = results.firstObject else {
+            showShareError = true
+            return
+        }
 
-        let options = PHImageRequestOptions()
-        options.version = .original
+        // Find the GIF resource (photo resource with .GIF uniform type)
+        let resources = PHAssetResource.assetResources(for: asset)
+        guard let gifResource = resources.first(where: {
+            $0.uniformTypeIdentifier == "com.compuserve.gif"
+        }) ?? resources.first else {
+            showShareError = true
+            return
+        }
+
+        // Collect the raw bytes via PHAssetResourceManager
+        var gifData = Data()
+        let options = PHAssetResourceRequestOptions()
         options.isNetworkAccessAllowed = true
 
-        PHImageManager.default().requestImageDataAndOrientation(for: asset, options: options) { data, _, _, _ in
-            Task { @MainActor in
-                if let data {
-                    shareData = data
-                    showShareSheet = true
+        PHAssetResourceManager.default().requestData(
+            for: gifResource,
+            options: options,
+            dataReceivedHandler: { chunk in
+                gifData.append(chunk)
+            },
+            completionHandler: { error in
+                Task { @MainActor in
+                    if error == nil, !gifData.isEmpty {
+                        shareItems = [gifData]
+                        showShareSheet = true
+                    } else {
+                        showShareError = true
+                    }
                 }
             }
-        }
+        )
     }
 }
 
@@ -240,8 +273,16 @@ struct MediaLibraryView: View {
 
 /// A single Liquid Glass tile in the Media Library grid.
 ///
-/// Layers: ultraThinMaterial → white 10% fill → white 39% border →
-/// inner shadow highlight. Contains a GIF thumbnail from Photos.
+/// Layers (bottom to top):
+/// 1. ultraThinMaterial backdrop (picks up parent gradient)
+/// 2. White 10% tint (glassBackground)
+/// 3. GIF thumbnail — clipped to rounded rect so glass edges show through
+/// 4. White 39% border stroke (glassBorder)
+/// 5. Inner highlight gradient stroke at top edge
+///
+/// The thumbnail is inset slightly and clipped to the rounded shape so
+/// the glass border and highlight are always visible around the edges,
+/// giving populated cards the same Liquid Glass look as empty placeholders.
 struct GIFGlassCard: View {
 
     let entry: GIFHistoryEntry
@@ -250,34 +291,37 @@ struct GIFGlassCard: View {
 
     @State private var thumbnail: UIImage?
 
+    private let corner = DesignTokens.glassCornerRadius
+
     var body: some View {
         Button(action: onTap) {
             ZStack {
-                // Glass card background
-                RoundedRectangle(cornerRadius: DesignTokens.glassCornerRadius)
+                // Glass card background — visible around edges and through
+                // the thumbnail's rounded corners.
+                RoundedRectangle(cornerRadius: corner)
                     .fill(.ultraThinMaterial)
 
-                RoundedRectangle(cornerRadius: DesignTokens.glassCornerRadius)
+                RoundedRectangle(cornerRadius: corner)
                     .fill(DesignTokens.glassBackground)
 
-                // Thumbnail
+                // Thumbnail — fills the card but clipped to rounded rect
                 if let thumbnail {
                     Image(uiImage: thumbnail)
                         .resizable()
                         .aspectRatio(contentMode: .fill)
-                        .frame(maxWidth: .infinity, maxHeight: height)
-                        .clipped()
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .clipShape(RoundedRectangle(cornerRadius: corner))
                 } else {
                     ProgressView()
                         .tint(DesignTokens.mutedWarm)
                 }
 
-                // Glass border
-                RoundedRectangle(cornerRadius: DesignTokens.glassCornerRadius)
+                // Glass border — always on top of thumbnail
+                RoundedRectangle(cornerRadius: corner)
                     .stroke(DesignTokens.glassBorder, lineWidth: 1)
 
                 // Inner highlight — top edge glow
-                RoundedRectangle(cornerRadius: DesignTokens.glassCornerRadius)
+                RoundedRectangle(cornerRadius: corner)
                     .stroke(
                         LinearGradient(
                             colors: [DesignTokens.glassHighlight, Color.clear],
@@ -290,7 +334,7 @@ struct GIFGlassCard: View {
             }
             .frame(maxWidth: .infinity)
             .frame(height: height)
-            .clipShape(RoundedRectangle(cornerRadius: DesignTokens.glassCornerRadius))
+            .clipShape(RoundedRectangle(cornerRadius: corner))
             .shadow(color: Color.black.opacity(0.06), radius: 8, x: 0, y: 4)
         }
         .buttonStyle(.plain)
