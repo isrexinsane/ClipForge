@@ -46,7 +46,9 @@ final class VideoPlayerManager: ObservableObject {
     ///
     /// - Parameter videoURL: Local file URL (typically in Caches directory).
     init(videoURL: URL) {
+        #if DEBUG
         print("VideoPlayerManager: loading \(videoURL.lastPathComponent)")
+        #endif
         self.asset = AVURLAsset(url: videoURL)
         let item = AVPlayerItem(asset: asset)
         self.player = AVPlayer(playerItem: item)
@@ -119,6 +121,7 @@ final class VideoPlayerManager: ObservableObject {
     /// Watches the player item status so format errors surface in the console.
     private func observeItemStatus(_ item: AVPlayerItem) {
         statusObserver = item.observe(\.status, options: [.new]) { item, _ in
+            #if DEBUG
             switch item.status {
             case .readyToPlay:
                 print("VideoPlayerManager: item ready to play")
@@ -130,6 +133,7 @@ final class VideoPlayerManager: ObservableObject {
             default:
                 break
             }
+            #endif
         }
     }
 

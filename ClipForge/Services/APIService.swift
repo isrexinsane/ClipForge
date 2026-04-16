@@ -136,7 +136,9 @@ final class APIService: NSObject, Sendable {
         let expectedLength = httpResponse.expectedContentLength
         let contentType = httpResponse.value(forHTTPHeaderField: "Content-Type") ?? "unknown"
         let fileExtension = Self.fileExtension(forContentType: contentType)
-        print("APIService: download Content-Type = \(contentType), using extension .\(fileExtension)")
+        #if DEBUG
+        print("APIService: Content-Type = \(contentType), using extension .\(fileExtension)")
+        #endif
 
         let cacheDir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
         let localURL = cacheDir.appendingPathComponent("\(UUID().uuidString).\(fileExtension)")
@@ -174,7 +176,9 @@ final class APIService: NSObject, Sendable {
         progressHandler(1.0)
 
         let fileSize = (try? FileManager.default.attributesOfItem(atPath: localURL.path)[.size] as? Int64) ?? 0
+        #if DEBUG
         print("APIService: saved \(fileSize) bytes to \(localURL.lastPathComponent)")
+        #endif
 
         return localURL
     }

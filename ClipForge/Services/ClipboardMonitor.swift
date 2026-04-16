@@ -41,13 +41,19 @@ final class ClipboardMonitor: ObservableObject {
     /// Should be called from the app's scene phase observer when
     /// transitioning to `.active`.
     func checkClipboard() {
+        #if DEBUG
         print("ClipboardMonitor: checking clipboard...")
+        #endif
         let pasteboardString = UIPasteboard.general.string
+        #if DEBUG
         print("ClipboardMonitor: clipboard content = \(pasteboardString ?? "<nil>")")
+        #endif
 
         // Skip if clipboard hasn't changed since last check
         guard pasteboardString != lastCheckedString else {
+            #if DEBUG
             print("ClipboardMonitor: clipboard unchanged, skipping")
+            #endif
             return
         }
         lastCheckedString = pasteboardString
@@ -62,26 +68,36 @@ final class ClipboardMonitor: ObservableObject {
               let url = URL(string: text),
               url.scheme == "http" || url.scheme == "https",
               url.host != nil else {
+            #if DEBUG
             print("ClipboardMonitor: no valid URL found on clipboard")
+            #endif
             return
         }
 
+        #if DEBUG
         print("ClipboardMonitor: parsed URL with host = \(url.host ?? "<nil>"), path = \(url.path)")
+        #endif
 
         // Check YouTube first — detected and rejected
         if SupportedPlatform.isYouTubeURL(url) {
+            #if DEBUG
             print("ClipboardMonitor: YouTube URL detected and rejected")
+            #endif
             isYouTubeURL = true
             return
         }
 
         // Check supported platforms with host + path validation
         if let platform = SupportedPlatform.platform(forURL: url) {
+            #if DEBUG
             print("ClipboardMonitor: found supported URL for \(platform.displayName): \(url.absoluteString)")
+            #endif
             detectedURL = url
             detectedPlatform = platform.displayName
         } else {
+            #if DEBUG
             print("ClipboardMonitor: URL host/path not in supported platforms list")
+            #endif
         }
     }
 

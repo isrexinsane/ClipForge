@@ -73,7 +73,9 @@ final class SubscriptionManager: ObservableObject {
             product = products.first
         } catch {
             // Product not found — expected in Simulator without StoreKit config.
+            #if DEBUG
             print("[SubscriptionManager] Failed to load product: \(error.localizedDescription)")
+            #endif
         }
     }
 

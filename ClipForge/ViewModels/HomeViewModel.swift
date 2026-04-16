@@ -63,20 +63,28 @@ final class HomeViewModel: ObservableObject {
                 // Don't override active import states
                 switch self.importState {
                 case .extracting, .downloading, .success:
+                    #if DEBUG
                     print("HomeViewModel: ignoring clipboard update — import in progress (\(self.importState))")
+                    #endif
                     return
                 default:
                     break
                 }
 
                 if isYouTube {
+                    #if DEBUG
                     print("HomeViewModel: YouTube URL detected — showing rejection message")
+                    #endif
                     self.importState = .youtubeDetected
                 } else if let url, let platform {
+                    #if DEBUG
                     print("HomeViewModel: received URL from clipboard: \(url.absoluteString) (\(platform))")
+                    #endif
                     self.importState = .urlDetected(url: url, platform: platform)
                 } else {
+                    #if DEBUG
                     print("HomeViewModel: no supported URL — state → idle")
+                    #endif
                     self.importState = .idle
                 }
             }
@@ -91,11 +99,15 @@ final class HomeViewModel: ObservableObject {
     /// Progresses through: extracting → downloading → success (or error).
     func startImport() {
         guard case .urlDetected(let url, let platform) = importState else {
+            #if DEBUG
             print("HomeViewModel: CTA tapped but state is \(importState) — ignoring")
+            #endif
             return
         }
 
+        #if DEBUG
         print("HomeViewModel: CTA tapped, starting import for: \(url.absoluteString) (\(platform))")
+        #endif
         importTask?.cancel()
         importTask = Task {
             await performImport(url: url)
@@ -121,15 +133,21 @@ final class HomeViewModel: ObservableObject {
     /// Executes the two-phase import: extract → download.
     private func performImport(url: URL) async {
         // Phase 1: Extraction (indeterminate progress)
+        #if DEBUG
         print("HomeViewModel: extraction started for \(url.absoluteString)")
+        #endif
         importState = .extracting
 
         let extractionResponse: ExtractionResponse
         do {
             extractionResponse = try await apiService.extractVideo(url: url.absoluteString)
+            #if DEBUG
             print("HomeViewModel: extraction succeeded — video_url = \(extractionResponse.videoURL.absoluteString)")
+            #endif
         } catch let error as ClipForgeError {
+            #if DEBUG
             print("HomeViewModel: extraction failed — \(error)")
+            #endif
             importState = .error(message: error.errorDescription ?? "Something went wrong. Please try again.")
             return
         } catch {
@@ -155,12 +173,16 @@ final class HomeViewModel: ObservableObject {
             // to avoid doubling the path prefix.
             let origin = Configuration.baseURL.scheme! + "://" + Configuration.baseURL.host!
             guard let resolved = URL(string: origin + extractionResponse.videoURL.absoluteString) else {
+                #if DEBUG
                 print("HomeViewModel: could not resolve video_url — \(extractionResponse.videoURL)")
+                #endif
                 importState = .error(message: "Something went wrong. Please try again.")
                 return
             }
             mediaURL = resolved
+            #if DEBUG
             print("HomeViewModel: resolved relative video_url → \(mediaURL.absoluteString)")
+            #endif
         }
 
         let localURL: URL
@@ -187,7 +209,9 @@ final class HomeViewModel: ObservableObject {
         guard !Task.isCancelled else { return }
 
         // Success — trigger Trim Modal
+        #if DEBUG
         print("HomeViewModel: extraction complete, opening trim modal")
+        #endif
         let metadata = extractionResponse.toVideoMetadata()
         importState = .success(localVideoURL: localURL, metadata: metadata)
         showTrimModal = true
