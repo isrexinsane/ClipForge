@@ -428,6 +428,9 @@ Confirmed design decisions that update or override original BMAD artifacts. Each
 | 2026-04-15 | **Watermark: monospace text treatment.** "CLIPFORGE" rendered via CoreGraphics at 50% opacity, white with black shadow, bottom-right. Free tier only. | Placeholder until final logomark branding. `applyWatermark(to:)` method in GIFEncoder. Skipped when `isPremium = true`. | Developer (Epic 7) |
 | 2026-04-15 | **Subscription presentation RESOLVED.** SubscriptionView renamed to UpgradeView (naming collision with SwiftUI.SubscriptionView caused type-checker cascade). SubscriptionRouter singleton replaces NotificationCenter. RootView wrapper presents UpgradeView via `.fullScreenCover`. | Root cause was naming collision, not body complexity. SwiftUI.SubscriptionView expects `content/publisher/action` params — Swift tried matching that overload instead of our custom view. Renaming + SubscriptionRouter (@Published bool) + RootView wrapper solved it cleanly. | Developer (Epic 8) |
 | 2026-04-15 | **App launch entitlement check.** `SubscriptionManager.shared.checkEntitlements()` called in `.task` on ContentView. | Syncs premium status from iCloud/StoreKit on every app launch. Handles cross-device purchases and subscription renewals/expirations. | Developer (Epic 8) |
+| 2026-04-16 | **INSTAGRAM-CODEC RESOLVED.** `_build_instagram_codec_args()` adds `-S vcodec:h264` + `--recode-video mp4` for Instagram URLs only. | Instagram returns HEVC (H.265) which causes iOS Simulator playback failures and potential GIF encoding issues. H.264 preference + server-side transcode fallback guarantees compatibility. | Backend (extraction.py) |
+| 2026-04-16 | **API key secured via xcconfig.** Hardcoded key removed from Configuration.swift. Reads from Info.plist `$(CLIPFORGE_API_KEY)` → `Secrets.xcconfig` (gitignored). | Prevents API key from being committed to git. Standard iOS pattern for secret management. | Developer (Epic 10) |
+| 2026-04-16 | **SubscriptionRouter @MainActor.** Added `@MainActor` isolation to match other singleton services. | Resolved the only Swift concurrency warning in the project. Zero-warning build confirmed. | Developer (Epic 10) |
 
 ---
 
@@ -439,7 +442,7 @@ This section tracks the current state of the BMAD pipeline. Update it after ever
 
 ```
 PHASE 10 — INTEGRATION & POLISH (SM/Dev/QA)
-Status: IN PROGRESS — EXTRACT-CONFIG resolved, Epics 7–8 code complete, platform testing partial (3/5)
+Status: IN PROGRESS — EXTRACT-CONFIG resolved, INSTAGRAM-CODEC resolved, Epics 7–8 code complete, concurrency warnings cleared, platform testing partial (4/5 — TikTok outstanding)
 ```
 
 ### Phase History
@@ -456,17 +459,16 @@ Status: IN PROGRESS — EXTRACT-CONFIG resolved, Epics 7–8 code complete, plat
 | Phase 7: Video Import Flow (SM/Dev/QA) | ✅ Complete | 2026-04-12 | Epic 3: 5 stories (STORY-009 through STORY-013). APIService, ClipboardMonitor, HomeViewModel, CTA progress ring, VideoPlayerManager + Trim Modal shell. |
 | Phase 8: Trim Interface (SM/Dev/QA) | ✅ Complete | 2026-04-12 | Epic 4: 5 stories (STORY-014 through STORY-018). TrimViewModel, FilmstripGenerator, TrimBarView, Duration Readout, CREATE button, font setup. |
 | Phase 9: GIF Engine + Export (SM/Dev/QA) | ✅ Complete | 2026-04-12 | Epics 5+6: 5 stories (STORY-019 through STORY-023). GIFEncoder, ExportViewModel, ExportManager (PHPhotoLibrary), export success UI, ShareSheet, Media Library grid. |
-| Phase 10: Integration & Polish (SM/Dev/QA) | 🔄 In Progress | — | EXTRACT-CONFIG resolved. Epics 7–8 code complete. Platform testing: Twitter ✅, Twitch ✅, Instagram ⚠️ (HEVC), Reddit ⚠️ (timeout), TikTok ❌ (403). |
+| Phase 10: Integration & Polish (SM/Dev/QA) | 🔄 In Progress | — | EXTRACT-CONFIG resolved. INSTAGRAM-CODEC resolved (H.264 forced). Epics 7–8 code complete. Concurrency warnings cleared. API key secured via xcconfig. Platform testing: Twitter ✅, Twitch ✅, Instagram ✅ (H.264), Reddit ⚠️ (timeout), TikTok ❌ (403). |
 | Phase 11: TestFlight Beta (Human) | ⬜ Not Started | — | Beta builds, bug fixes |
 | Phase 12: App Store Submission (Human) | ⬜ Not Started | — | Listing, screenshots, submission |
 
 ### Next Actions
 
-1. Fix INSTAGRAM-CODEC — Add `--recode-video mp4` / `-S vcodec:h264` for Instagram extractions
-2. Investigate TIKTOK-FIX — TikTok returns 403 even through proxy; may need cookies or browser headers
-3. Stage 3 Mega-Checkpoint — Full end-to-end GIF creation test on working platforms (Twitter, Twitch, Reddit)
-4. PO Full Validation — Cross-reference PRD F-01 through F-08 against implemented code
-5. Stage 5 — Epics 10–11 (Visual polish, App Store submission). Epic 9 (Onboarding) complete.
+1. Investigate TIKTOK-FIX — TikTok returns 403 even through proxy; may need cookies or browser headers
+2. Stage 3 Mega-Checkpoint — Full end-to-end GIF creation test on working platforms (Twitter, Twitch, Instagram, Reddit)
+3. PO Full Validation — Cross-reference PRD F-01 through F-08 against implemented code
+4. Stage 5 — Epics 10–11 (Visual polish, App Store submission). Epic 9 (Onboarding) complete.
 
 ### Completed Stories
 
@@ -511,11 +513,11 @@ Status: IN PROGRESS — EXTRACT-CONFIG resolved, Epics 7–8 code complete, plat
 | EXTRACT-CONFIG | CRITICAL | ✅ Resolved | Resolved 2026-04-15. IPRoyal residential proxy, Instagram cookies, Reddit timeout, yt-dlp nightly, MP4 format preference. See Master_Session_Handoff_2026-04-15.md §4. |
 | SUBSCRIPTION-PRESENTATION | Medium | ✅ Resolved | Resolved 2026-04-15. Root cause: custom SubscriptionView name collided with SwiftUI.SubscriptionView, causing type-checker cascade. Fix: renamed to UpgradeView, replaced NotificationCenter with SubscriptionRouter singleton (@Published bool), presentation via RootView wrapper. |
 | TIKTOK-FIX | Medium | Open | TikTok returns 403 even through residential proxy. Needs cookies, browser headers, or `--extractor-args` investigation. |
-| INSTAGRAM-CODEC | Medium | Open | Instagram returns HEVC (H.265) video. Add `--recode-video mp4` or `-S vcodec:h264` for Instagram-specific extractions. |
-| MEDIA-LIBRARY-LAYOUT | Low | Open | Media Library grid needs visual polish — spacing, empty state, thumbnail sizing. Epic 10 scope. |
+| INSTAGRAM-CODEC | Medium | ✅ Resolved | Resolved 2026-04-16. Added `-S vcodec:h264` and `--recode-video mp4` for Instagram-only extractions in `_build_instagram_codec_args()`. Curl test confirmed `video/mp4` response. |
+| MEDIA-LIBRARY-LAYOUT | Low | ✅ Resolved | Resolved 2026-04-16. Unified masonry grid (9 slots, GIFs + placeholders), Liquid Glass card treatment, share sheet fix (PHAssetResourceManager). |
 | AUTH-FIX | Low | Open | FastAPI returns 422 for missing API key header; API Contract §4 specifies 401. Minor backend middleware fix. |
-| Concurrency Warnings | Low | Open | 7 Swift Sendable warnings in ExportViewModel, TrimViewModel, VideoPlayerManager. Non-blocking. Epic 10 scope. |
-| Visual Polish | Medium | Open | UI renders but doesn't match Figma designs (gradients, spacing, colors). Epic 10 scope. |
+| Concurrency Warnings | Low | ✅ Resolved | Resolved 2026-04-16. Only 1 actual warning: SubscriptionRouter.shared missing `@MainActor`. Added `@MainActor` to class. Zero warnings confirmed on rebuild. |
+| Visual Polish | Medium | ✅ Resolved | Resolved 2026-04-16. Background gradient moved to ContentView (full bleed behind Dynamic Island), CAVA morphing page indicator, trim handle 44pt touch targets + drag feedback, CTA breathing glow, unified masonry gallery. |
 
 ### QA Audit Log
 
@@ -526,6 +528,9 @@ Status: IN PROGRESS — EXTRACT-CONFIG resolved, Epics 7–8 code complete, plat
 | 2026-04-15 | Epics 7–8 Code Review | CODE COMPLETE | FreemiumGatekeeper, watermark, gate, counter, SubscriptionManager, UpgradeView, entitlement check, menu integration. |
 | 2026-04-15 | SUBSCRIPTION-PRESENTATION Fix | ✅ RESOLVED | Root cause: naming collision with SwiftUI.SubscriptionView. Fix: renamed to UpgradeView + SubscriptionRouter singleton + RootView wrapper. Build succeeds, subscription presentation functional. |
 | 2026-04-15 | Epic 9 Onboarding | CODE COMPLETE | OnboardingView with 3-page TabView, @AppStorage flag, fullScreenCover from ContentView. Skip + Get Started dismiss via @Environment(\.dismiss). |
+| 2026-04-16 | INSTAGRAM-CODEC Fix | ✅ RESOLVED | Backend: `-S vcodec:h264` + `--recode-video mp4` for Instagram only. Curl test: `video/mp4` response confirmed. Railway auto-deployed from commit 49db2c5. |
+| 2026-04-16 | Concurrency Warnings | ✅ RESOLVED | 1 warning (not 7): SubscriptionRouter.shared missing @MainActor. Fix: added @MainActor to class. Zero-warning build confirmed. |
+| 2026-04-16 | API Key Security | ✅ RESOLVED | Hardcoded key removed from Configuration.swift. Moved to Secrets.xcconfig (gitignored) → Info.plist variable substitution → Bundle.main.infoDictionary at runtime. |
 
 ---
 
