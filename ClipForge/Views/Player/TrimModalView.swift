@@ -178,9 +178,13 @@ struct TrimModalView: View {
     @ViewBuilder
     private var videoArea: some View {
         if case .success(let gifData, _, _) = exportViewModel.exportState {
-            // GIF preview — looping animated image
+            // GIF preview — looping animated image, constrained to max 50%
+            // of screen height so Share/Done buttons stay visible even for
+            // tall portrait GIFs (e.g., 1080×1920 Instagram Reels).
             GIFPreviewView(gifData: gifData)
                 .aspectRatio(contentMode: .fit)
+                .frame(maxHeight: UIScreen.main.bounds.height * 0.5)
+                .clipShape(RoundedRectangle(cornerRadius: 12))
                 .padding(.horizontal, DesignTokens.paddingStandard)
         } else {
             // Live video player
@@ -340,75 +344,77 @@ struct TrimModalView: View {
     // MARK: - Success State (STORY-022)
 
     private var successSection: some View {
-        VStack(spacing: DesignTokens.paddingStandard) {
-            // File info line
-            if let info = exportViewModel.fileInfoText {
-                Text(info)
-                    .font(DesignTokens.labelFont(size: 14))
-                    .foregroundStyle(.white)
-            }
+        ScrollView(showsIndicators: false) {
+            VStack(spacing: DesignTokens.paddingStandard) {
+                // File info line
+                if let info = exportViewModel.fileInfoText {
+                    Text(info)
+                        .font(DesignTokens.labelFont(size: 14))
+                        .foregroundStyle(.white)
+                }
 
-            // Oversize warning
-            if let warning = exportViewModel.oversizeWarning {
-                Text(warning)
-                    .font(DesignTokens.labelFont(size: 13))
-                    .foregroundStyle(DesignTokens.textSecondary)
-                    .multilineTextAlignment(.center)
-            }
+                // Oversize warning
+                if let warning = exportViewModel.oversizeWarning {
+                    Text(warning)
+                        .font(DesignTokens.labelFont(size: 13))
+                        .foregroundStyle(DesignTokens.textSecondary)
+                        .multilineTextAlignment(.center)
+                }
 
-            // Action buttons
-            HStack(spacing: DesignTokens.paddingStandard) {
-                // Share button — vermillion fill
-                Button {
-                    if case .success(let gifData, _, _) = exportViewModel.exportState {
-                        let tempURL = FileManager.default.temporaryDirectory
-                            .appendingPathComponent("ClipForge-\(UUID().uuidString).gif")
-                        do {
-                            try gifData.write(to: tempURL)
-                            shareFileURL = tempURL
-                            showShareSheet = true
-                            #if DEBUG
-                            print("DEBUG: wrote GIF to temp file for share: \(tempURL.lastPathComponent)")
-                            #endif
-                        } catch {
-                            #if DEBUG
-                            print("DEBUG: failed to write GIF temp file: \(error)")
-                            #endif
+                // Action buttons
+                HStack(spacing: DesignTokens.paddingStandard) {
+                    // Share button — vermillion fill
+                    Button {
+                        if case .success(let gifData, _, _) = exportViewModel.exportState {
+                            let tempURL = FileManager.default.temporaryDirectory
+                                .appendingPathComponent("ClipForge-\(UUID().uuidString).gif")
+                            do {
+                                try gifData.write(to: tempURL)
+                                shareFileURL = tempURL
+                                showShareSheet = true
+                                #if DEBUG
+                                print("DEBUG: wrote GIF to temp file for share: \(tempURL.lastPathComponent)")
+                                #endif
+                            } catch {
+                                #if DEBUG
+                                print("DEBUG: failed to write GIF temp file: \(error)")
+                                #endif
+                            }
                         }
+                    } label: {
+                        Text("SHARE")
+                            .font(DesignTokens.labelFont(size: 16))
+                            .foregroundStyle(.white)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 48)
+                            .background(
+                                RoundedRectangle(cornerRadius: DesignTokens.cornerRadiusButton)
+                                    .fill(DesignTokens.vermillion)
+                            )
                     }
-                } label: {
-                    Text("SHARE")
-                        .font(DesignTokens.labelFont(size: 16))
-                        .foregroundStyle(.white)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 48)
-                        .background(
-                            RoundedRectangle(cornerRadius: DesignTokens.cornerRadiusButton)
-                                .fill(DesignTokens.vermillion)
-                        )
+
+                    // Done button — ghost pill
+                    Button {
+                        handleDismiss()
+                    } label: {
+                        Text("DONE")
+                            .font(DesignTokens.labelFont(size: 16))
+                            .foregroundStyle(.white)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 48)
+                            .background(
+                                RoundedRectangle(cornerRadius: DesignTokens.cornerRadiusButton)
+                                    .stroke(.white, lineWidth: 1)
+                            )
+                    }
                 }
 
-                // Done button — ghost pill
-                Button {
-                    handleDismiss()
-                } label: {
-                    Text("DONE")
-                        .font(DesignTokens.labelFont(size: 16))
-                        .foregroundStyle(.white)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 48)
-                        .background(
-                            RoundedRectangle(cornerRadius: DesignTokens.cornerRadiusButton)
-                                .stroke(.white, lineWidth: 1)
-                        )
+                // Free tier counter — hidden for premium users (STORY-7.4)
+                if !gatekeeper.isPremium {
+                    Text("\(gatekeeper.remainingExports) of \(gatekeeper.dailyLimit) free GIFs remaining today")
+                        .font(DesignTokens.labelFont(size: 13))
+                        .foregroundStyle(DesignTokens.textSecondary)
                 }
-            }
-
-            // Free tier counter — hidden for premium users (STORY-7.4)
-            if !gatekeeper.isPremium {
-                Text("\(gatekeeper.remainingExports) of \(gatekeeper.dailyLimit) free GIFs remaining today")
-                    .font(DesignTokens.labelFont(size: 13))
-                    .foregroundStyle(DesignTokens.textSecondary)
             }
         }
     }
