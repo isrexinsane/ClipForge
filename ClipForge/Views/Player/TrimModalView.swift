@@ -178,14 +178,14 @@ struct TrimModalView: View {
     @ViewBuilder
     private var videoArea: some View {
         if case .success(let gifData, _, _) = exportViewModel.exportState {
-            // GIF preview — looping animated image, constrained to max 50%
-            // of screen height so Share/Done buttons stay visible even for
-            // tall portrait GIFs (e.g., 1080×1920 Instagram Reels).
+            // GIF preview — constrained to max 40% of screen height and
+            // padded horizontally so it doesn't feel cramped edge-to-edge,
+            // especially for tall portrait GIFs (e.g., 1080×1920 Reels).
             GIFPreviewView(gifData: gifData)
                 .aspectRatio(contentMode: .fit)
-                .frame(maxHeight: UIScreen.main.bounds.height * 0.5)
+                .frame(maxHeight: UIScreen.main.bounds.height * 0.4)
                 .clipShape(RoundedRectangle(cornerRadius: 12))
-                .padding(.horizontal, DesignTokens.paddingStandard)
+                .padding(.horizontal, DesignTokens.paddingXLarge)
         } else {
             // Live video player
             VideoPlayer(player: playerManager.player)
@@ -361,7 +361,7 @@ struct TrimModalView: View {
                         .multilineTextAlignment(.center)
                 }
 
-                // Action buttons
+                // Action buttons — inset from edges for breathing room
                 HStack(spacing: DesignTokens.paddingStandard) {
                     // Share button — vermillion fill
                     Button {
@@ -408,6 +408,7 @@ struct TrimModalView: View {
                             )
                     }
                 }
+                .padding(.horizontal, DesignTokens.paddingSmall)
 
                 // Free tier counter — hidden for premium users (STORY-7.4)
                 if !gatekeeper.isPremium {
