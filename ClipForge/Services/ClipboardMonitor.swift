@@ -39,17 +39,104 @@ final class ClipboardMonitor: ObservableObject {
     // Track the last checked string to avoid re-processing the same content.
     private var lastCheckedString: String?
 
+    // MARK: - Polling
+
+    /// Timer that fires every `pollingInterval` seconds after foregrounding.
+    private var pollingTimer: Timer?
+    /// When the current polling burst started.
+    private var pollingStartTime: Date?
+    /// How often to re-check the clipboard during a polling burst.
+    private let pollingInterval: TimeInterval = 0.5
+    /// Total duration of the polling burst (seconds).
+    private let pollingDuration: TimeInterval = 3.0
+    /// Running count for debug logging.
+    private var pollCheckCount: Int = 0
+
+    /// Begins an aggressive clipboard-polling burst.
+    ///
+    /// Checks immediately, then every 0.5 s for 3 seconds. Stops
+    /// early if a URL is detected or `stopPolling()` is called.
+    func startPolling() {
+        stopPolling()
+        pollingStartTime = Date()
+        pollCheckCount = 0
+
+        #if DEBUG
+        print("ClipboardMonitor: starting polling")
+        #endif
+
+        // Check immediately
+        pollCheckCount += 1
+        #if DEBUG
+        print("ClipboardMonitor: poll check \(pollCheckCount)/6")
+        #endif
+        checkClipboard()
+
+        // If the first check already found something, don't schedule more
+        if detectedURL != nil || isYouTubeURL || isRedditURL {
+            #if DEBUG
+            print("ClipboardMonitor: URL found on first check, stopping poll")
+            #endif
+            stopPolling()
+            return
+        }
+
+        // Schedule repeated checks
+        pollingTimer = Timer.scheduledTimer(withTimeInterval: pollingInterval, repeats: true) { [weak self] _ in
+            Task { @MainActor in
+                guard let self = self else { return }
+
+                // Stop after duration expires
+                if let start = self.pollingStartTime,
+                   Date().timeIntervalSince(start) > self.pollingDuration {
+                    #if DEBUG
+                    print("ClipboardMonitor: polling timeout, stopping")
+                    #endif
+                    self.stopPolling()
+                    return
+                }
+
+                // Stop if we already found a URL
+                if self.detectedURL != nil || self.isYouTubeURL || self.isRedditURL {
+                    #if DEBUG
+                    print("ClipboardMonitor: URL found, stopping poll")
+                    #endif
+                    self.stopPolling()
+                    return
+                }
+
+                self.pollCheckCount += 1
+                #if DEBUG
+                print("ClipboardMonitor: poll check \(self.pollCheckCount)/6")
+                #endif
+                self.checkClipboard()
+            }
+        }
+    }
+
+    /// Cancels any active polling burst.
+    func stopPolling() {
+        pollingTimer?.invalidate()
+        pollingTimer = nil
+        pollingStartTime = nil
+    }
+
     /// Reads the system clipboard and updates published properties.
     ///
-    /// Should be called from the app's scene phase observer when
-    /// transitioning to `.active`.
+    /// Tries `UIPasteboard.general.url` first (some apps put links
+    /// as URL objects), then falls back to `.string` and parses it.
     func checkClipboard() {
         #if DEBUG
         print("ClipboardMonitor: checking clipboard...")
         #endif
-        let pasteboardString = UIPasteboard.general.string
+
+        // Try the URL pasteboard first — some apps put the link as a
+        // URL object rather than a plain string.
+        let pasteboardURL = UIPasteboard.general.url
+        let pasteboardString = pasteboardURL?.absoluteString ?? UIPasteboard.general.string
+
         #if DEBUG
-        print("ClipboardMonitor: clipboard content = \(pasteboardString ?? "<nil>")")
+        print("ClipboardMonitor: clipboard url = \(pasteboardURL?.absoluteString ?? "<nil>"), string = \(UIPasteboard.general.string ?? "<nil>")")
         #endif
 
         // Skip if clipboard hasn't changed since last check

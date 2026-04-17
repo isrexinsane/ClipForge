@@ -62,11 +62,13 @@ struct HomeView: View {
                     .frame(height: DesignTokens.paddingXLarge + DesignTokens.paddingSmall)
             }
         .onAppear {
-            viewModel.clipboardMonitor.checkClipboard()
+            viewModel.clipboardMonitor.startPolling()
         }
         .onChange(of: scenePhase) { _, newPhase in
             if newPhase == .active {
-                viewModel.clipboardMonitor.checkClipboard()
+                viewModel.clipboardMonitor.startPolling()
+            } else {
+                viewModel.clipboardMonitor.stopPolling()
             }
         }
         .fullScreenCover(isPresented: $viewModel.showTrimModal) {
