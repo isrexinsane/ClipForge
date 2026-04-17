@@ -1,9 +1,11 @@
 """
 Video extraction endpoint — POST /v1/extract
 
-Receives a social media URL, validates it, invokes yt-dlp to extract
-the video, and returns metadata with a signed URL for the iOS client
-to retrieve the file.
+Receives a social media URL, validates it, extracts the video, and
+returns metadata with a URL for the iOS client to retrieve the file.
+
+Instagram: routed through RapidAPI (returns direct CDN URL).
+Twitter/X, Twitch: routed through yt-dlp (returns signed proxy URL).
 """
 
 import logging
@@ -14,11 +16,13 @@ from slowapi import Limiter
 from slowapi.util import get_remote_address
 
 from app.auth import verify_api_key
+from app.config import RAPIDAPI_KEY
 from app.extraction import (
     ExtractionError,
     ExtractionTimeout,
     extract_video,
 )
+from app.extractors.instagram_rapidapi import extract_instagram_via_rapidapi
 from app.signing import generate_signed_url
 from app.validators.exceptions import (
     InvalidContentPathError,
@@ -55,7 +59,7 @@ class ExtractResponse(BaseModel):
     duration: float
     width: int
     height: int
-    file_size: int
+    file_size: int | None = None
     content_type: str = "video/mp4"
     title: str | None = None
 
@@ -121,7 +125,47 @@ async def extract(
         validated.platform, validated.url,
     )
 
-    # --- Step 2: Extract video via yt-dlp ---
+    # --- Step 2: Extract video ---
+    # Instagram → RapidAPI (direct CDN URL, 1-2s)
+    # Twitter/X, Twitch → yt-dlp (backend proxies via signed URL)
+    if validated.platform == "instagram" and RAPIDAPI_KEY:
+        return await _extract_instagram(validated)
+    else:
+        return await _extract_via_ytdlp(validated)
+
+
+async def _extract_instagram(validated) -> ExtractResponse:
+    """Extract Instagram video via RapidAPI and return direct CDN URL."""
+    try:
+        result = await extract_instagram_via_rapidapi(validated.url)
+    except ExtractionTimeout:
+        raise _error(
+            504,
+            "EXTRACTION_TIMEOUT",
+            "The extraction request timed out. Please try again.",
+        )
+    except ExtractionError as e:
+        raise _error(502, "EXTRACTION_FAILED", e.detail)
+
+    logger.info(
+        "Instagram RapidAPI extraction complete: duration=%.1f",
+        result["duration"],
+    )
+
+    return ExtractResponse(
+        platform="instagram",
+        video_url=result["video_url"],
+        duration=result["duration"],
+        width=result["width"],
+        height=result["height"],
+        file_size=result["file_size"],
+        content_type=result["content_type"],
+        title=result["title"],
+    )
+
+
+async def _extract_via_ytdlp(validated) -> ExtractResponse:
+    """Extract video via yt-dlp (Twitter/X, Twitch) and return signed proxy URL."""
     try:
         result = await extract_video(
             url=validated.url,
@@ -136,11 +180,11 @@ async def extract(
     except ExtractionError as e:
         raise _error(502, "EXTRACTION_FAILED", e.detail)
 
-    # --- Step 3: Generate signed media URL ---
+    # Generate signed media URL for backend-proxied delivery
     media_url = generate_signed_url(result.file_id)
 
     logger.info(
-        "Extraction complete: platform=%s file_id=%s size=%d duration=%.1f",
+        "yt-dlp extraction complete: platform=%s file_id=%s size=%d duration=%.1f",
         result.platform, result.file_id, result.file_size, result.duration,
     )
 

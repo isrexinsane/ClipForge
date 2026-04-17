@@ -150,7 +150,7 @@ final class HomeViewModel: ObservableObject {
             extractionResponse = try await apiService.extractVideo(url: url.absoluteString)
             #if DEBUG
             print("DEBUG: extraction response — status: \(extractionResponse.status), video_url: \(extractionResponse.videoURL.absoluteString)")
-            print("DEBUG: extraction metadata — platform: \(extractionResponse.platform), duration: \(extractionResponse.duration), size: \(extractionResponse.fileSize)")
+            print("DEBUG: extraction metadata — platform: \(extractionResponse.platform), duration: \(extractionResponse.duration), size: \(extractionResponse.fileSize ?? 0)")
             #endif
         } catch let error as ClipForgeError {
             #if DEBUG

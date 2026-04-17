@@ -24,6 +24,15 @@ if CLIPFORGE_API_KEY is None:
 HOST: str = os.environ.get("HOST", "0.0.0.0")
 PORT: int = int(os.environ.get("PORT", "8000"))
 
+# RapidAPI key for Instagram Video Downloader (replaces yt-dlp for Instagram).
+# Read from environment — never hardcoded.
+RAPIDAPI_KEY: str = os.environ.get("RAPIDAPI_KEY", "")
+
+if not RAPIDAPI_KEY:
+    logger.warning(
+        "RAPIDAPI_KEY is not set. Instagram extraction will fall back to yt-dlp."
+    )
+
 # Supported platforms — the canonical list shared with the iOS client
 # via the /v1/health response. YouTube is intentionally excluded from MVP.
 SUPPORTED_PLATFORMS: list[str] = [

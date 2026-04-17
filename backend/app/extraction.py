@@ -1,20 +1,15 @@
 """
-Video extraction service using yt-dlp as an isolated subprocess.
+Video extraction service.
 
-yt-dlp is invoked via asyncio subprocess (not imported as a library) to
-provide process isolation and timeout control per Architecture Spec §7.3.
-If yt-dlp hangs or crashes, only the subprocess is affected.
-
-Supported platforms: Twitter/X, Instagram, TikTok, Twitch.
+Twitter/X and Twitch use yt-dlp as an isolated subprocess (Architecture
+Spec §7.3). Instagram uses RapidAPI (1-2s vs 30-90s with yt-dlp).
 Reddit and YouTube are rejected at the URL validation layer.
 
-Proxy and cookie support (EXTRACT-CONFIG):
+yt-dlp proxy and cookie support (EXTRACT-CONFIG):
     - YTDLP_PROXY env var: passed as --proxy to yt-dlp. Use a residential
       proxy URL to avoid datacenter IP blocking by social media platforms.
     - YTDLP_COOKIES_CONTENT env var: Netscape-format cookie file contents,
       written to /tmp/clipforge_cookies.txt at startup and passed via --cookies.
-    - INSTAGRAM_SESSION_COOKIE env var: Instagram sessionid cookie value,
-      written to a platform-specific cookie file for Instagram extractions.
 """
 
 import asyncio
@@ -32,53 +27,33 @@ logger = logging.getLogger(__name__)
 TEMP_DIR = Path("/tmp/clipforge")
 TEMP_DIR.mkdir(parents=True, exist_ok=True)
 
-# yt-dlp subprocess timeout in seconds.
-# Instagram needs longer because --recode-video mp4 triggers server-side
-# ffmpeg transcoding from HEVC to H.264.
+# yt-dlp subprocess timeout in seconds (Twitter/X, Twitch).
 EXTRACTION_TIMEOUT_SECONDS: int = 30
-INSTAGRAM_EXTRACTION_TIMEOUT_SECONDS: int = 90
 
-# Cookie file paths
+# Cookie file path for yt-dlp (general — not Instagram-specific).
 COOKIES_FILE = Path("/tmp/clipforge_cookies.txt")
-INSTAGRAM_COOKIES_FILE = Path("/tmp/clipforge_instagram_cookies.txt")
 
-# Platform display names for error messages
+# Platform display names for error messages (yt-dlp platforms only)
 _PLATFORM_DISPLAY_NAMES: dict[str, str] = {
     "twitter": "Twitter/X",
-    "instagram": "Instagram",
     "tiktok": "TikTok",
     "twitch": "Twitch",
 }
 
 
 def setup_cookies() -> None:
-    """Write cookie files from environment variables at startup.
+    """Write the general cookie file from environment variables at startup.
 
-    Called during FastAPI lifespan startup. Writes two optional cookie files:
-    1. General cookies from YTDLP_COOKIES_CONTENT (Netscape format, any platform).
-    2. Instagram-specific cookies from INSTAGRAM_SESSION_COOKIE (sessionid only).
-
-    If the env vars are not set, the corresponding files are not created
-    and yt-dlp runs without --cookies for those cases.
+    Called during FastAPI lifespan startup. Writes the optional cookie file
+    from YTDLP_COOKIES_CONTENT (Netscape format) for Twitter/X and Twitch.
+    Instagram no longer uses yt-dlp — it goes through RapidAPI.
     """
-    # General cookies file
     cookies_content: str | None = os.environ.get("YTDLP_COOKIES_CONTENT")
     if cookies_content:
         COOKIES_FILE.write_text(cookies_content)
         logger.info("Wrote general cookies file to %s", COOKIES_FILE)
     else:
         logger.info("YTDLP_COOKIES_CONTENT not set — no general cookies file")
-
-    # Instagram-specific session cookie
-    ig_session: str | None = os.environ.get("INSTAGRAM_SESSION_COOKIE")
-    if ig_session:
-        # Netscape cookie format: domain, flag, path, secure, expiry, name, value
-        netscape_header = "# Netscape HTTP Cookie File\n"
-        cookie_line = f".instagram.com\tTRUE\t/\tTRUE\t0\tsessionid\t{ig_session}\n"
-        INSTAGRAM_COOKIES_FILE.write_text(netscape_header + cookie_line)
-        logger.info("Wrote Instagram cookies file to %s", INSTAGRAM_COOKIES_FILE)
-    else:
-        logger.info("INSTAGRAM_SESSION_COOKIE not set — no Instagram cookies file")
 
 
 def _build_proxy_args() -> list[str]:
@@ -93,57 +68,14 @@ def _build_proxy_args() -> list[str]:
     return []
 
 
-def _build_cookie_args(platform: str) -> list[str]:
-    """Build --cookies arguments based on platform and available cookie files.
-
-    Instagram extractions prefer the Instagram-specific cookie file if it
-    exists. All other platforms use the general cookies file. If neither
-    exists, no --cookies argument is added.
-
-    Args:
-        platform: The detected platform name (e.g., "instagram").
+def _build_cookie_args() -> list[str]:
+    """Build --cookies arguments if the general cookies file exists.
 
     Returns:
-        ["--cookies", path] if a cookies file exists, else [].
+        ["--cookies", path] if the cookies file exists, else [].
     """
-    # Instagram-specific cookies take priority for Instagram URLs
-    if platform == "instagram" and INSTAGRAM_COOKIES_FILE.exists():
-        return ["--cookies", str(INSTAGRAM_COOKIES_FILE)]
-
-    # General cookies file for all platforms
     if COOKIES_FILE.exists():
         return ["--cookies", str(COOKIES_FILE)]
-
-    return []
-
-
-def _build_instagram_codec_args(platform: str) -> list[str]:
-    """Build forced H.264 transcoding args for Instagram extractions.
-
-    Instagram frequently serves HEVC-only Reels with no H.264 stream
-    available. The -S vcodec:h264 preference flag is useless in that case.
-    Instead, we force ffmpeg to transcode to H.264 baseline + AAC audio
-    via --postprocessor-args, which guarantees iOS AVPlayer compatibility
-    regardless of the source codec.
-
-    --recode-video mp4          → triggers ffmpeg post-processing
-    --postprocessor-args        → explicit libx264 + aac + faststart
-    +faststart                  → moves moov atom for streaming playback
-
-    Only applied to Instagram — other platforms return H.264 natively.
-
-    Args:
-        platform: The detected platform name.
-
-    Returns:
-        Transcoding args for Instagram, else [].
-    """
-    if platform == "instagram":
-        return [
-            "--recode-video", "mp4",
-            "--postprocessor-args",
-            "ffmpeg:-vcodec libx264 -acodec aac -movflags +faststart",
-        ]
     return []
 
 
@@ -153,8 +85,8 @@ def is_proxy_configured() -> bool:
 
 
 def is_cookies_configured() -> bool:
-    """Check whether any cookie file exists for yt-dlp."""
-    return COOKIES_FILE.exists() or INSTAGRAM_COOKIES_FILE.exists()
+    """Check whether the general cookie file exists for yt-dlp."""
+    return COOKIES_FILE.exists()
 
 
 @dataclass
@@ -188,6 +120,9 @@ class ExtractionTimeout(Exception):
 async def extract_video(url: str, platform: str) -> ExtractionResult:
     """Extract video from a social media URL using yt-dlp.
 
+    Used for Twitter/X and Twitch. Instagram is routed through RapidAPI
+    at the router layer and never reaches this function.
+
     Args:
         url: The validated, cleaned URL to extract from.
         platform: The detected platform name (e.g., "twitter").
@@ -197,7 +132,7 @@ async def extract_video(url: str, platform: str) -> ExtractionResult:
 
     Raises:
         ExtractionError: yt-dlp failed (non-zero exit, no output file).
-        ExtractionTimeout: yt-dlp exceeded the timeout (90s Instagram, 30s others).
+        ExtractionTimeout: yt-dlp exceeded the timeout.
     """
     file_id = str(uuid.uuid4())
     output_template = str(TEMP_DIR / f"{file_id}.%(ext)s")
@@ -216,13 +151,12 @@ async def extract_video(url: str, platform: str) -> ExtractionResult:
         "--write-info-json",
         "--no-write-playlist-metafiles",
         *_build_proxy_args(),
-        *_build_cookie_args(platform),
-        *_build_instagram_codec_args(platform),
+        *_build_cookie_args(),
         url,
     ]
 
     display_name = _PLATFORM_DISPLAY_NAMES.get(platform, platform)
-    timeout = INSTAGRAM_EXTRACTION_TIMEOUT_SECONDS if platform == "instagram" else EXTRACTION_TIMEOUT_SECONDS
+    timeout = EXTRACTION_TIMEOUT_SECONDS
 
     try:
         # Pass current env to subprocess so it inherits PATH

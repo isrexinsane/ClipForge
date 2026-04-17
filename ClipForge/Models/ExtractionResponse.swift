@@ -32,8 +32,8 @@ struct ExtractionResponse: Decodable, Sendable {
     /// Video height in pixels.
     let height: Int
 
-    /// Video file size in bytes.
-    let fileSize: Int64
+    /// Video file size in bytes. `nil` for RapidAPI extractions (Instagram).
+    let fileSize: Int64?
 
     /// MIME type of the video (typically "video/mp4").
     let contentType: String

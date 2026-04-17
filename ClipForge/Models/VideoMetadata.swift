@@ -29,8 +29,8 @@ struct VideoMetadata: Codable, Identifiable, Sendable {
     /// Video height in pixels.
     let height: Int
 
-    /// File size in bytes.
-    let fileSize: Int64
+    /// File size in bytes. `nil` for Instagram (RapidAPI doesn't provide this).
+    let fileSize: Int64?
 
     /// Temporary signed URL for retrieving the video file from `/v1/media/{file_id}`.
     /// Valid for 5 minutes after extraction.

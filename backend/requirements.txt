@@ -3,3 +3,4 @@ uvicorn==0.34.2
 yt-dlp==2026.4.10.235301.dev0
 slowapi==0.1.9
 pydantic==2.11.3
+httpx==0.28.1
