@@ -177,15 +177,13 @@ struct TrimModalView: View {
 
     @ViewBuilder
     private var videoArea: some View {
-        if case .success(let gifData, _, _) = exportViewModel.exportState {
-            // GIF preview — constrained to max 40% of screen height and
-            // padded horizontally so it doesn't feel cramped edge-to-edge,
-            // especially for tall portrait GIFs (e.g., 1080×1920 Reels).
-            GIFPreviewView(gifData: gifData)
-                .aspectRatio(contentMode: .fit)
-                .frame(maxHeight: UIScreen.main.bounds.height * 0.4)
-                .clipShape(RoundedRectangle(cornerRadius: 12))
-                .padding(.horizontal, DesignTokens.paddingXLarge)
+        if case .success(let gifData, _, let dimensions) = exportViewModel.exportState {
+            // GIF preview — UIViewRepresentable has no intrinsic size, so
+            // SwiftUI can't constrain it with padding alone. We compute an
+            // explicit frame size from the GIF dimensions, the max allowed
+            // height (40% of screen), and the available width (screen minus
+            // 48pt horizontal inset per side).
+            gifPreviewContainer(gifData: gifData, dimensions: dimensions)
         } else {
             // Live video player
             VideoPlayer(player: playerManager.player)
@@ -199,6 +197,26 @@ struct TrimModalView: View {
                     }
                 }
         }
+    }
+
+    /// Computes an explicit frame for the GIF preview so the
+    /// UIViewRepresentable doesn't expand to fill all available space.
+    private func gifPreviewContainer(gifData: Data, dimensions: CGSize) -> some View {
+        let screenW = UIScreen.main.bounds.width
+        let screenH = UIScreen.main.bounds.height
+        let maxW = screenW - 20 * 2  // 20pt inset each side
+        let maxH = screenH * 0.45
+
+        // Aspect-fit the GIF into the available box
+        let ratio = dimensions.width > 0 && dimensions.height > 0
+            ? dimensions.width / dimensions.height
+            : 9.0 / 16.0
+        let fitW = min(maxW, maxH * ratio)
+        let fitH = fitW / ratio
+
+        return GIFPreviewView(gifData: gifData)
+            .frame(width: fitW, height: fitH)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 
     // MARK: - Bottom Section
@@ -408,7 +426,7 @@ struct TrimModalView: View {
                             )
                     }
                 }
-                .padding(.horizontal, DesignTokens.paddingSmall)
+                .padding(.horizontal, 8)
 
                 // Free tier counter — hidden for premium users (STORY-7.4)
                 if !gatekeeper.isPremium {
@@ -417,6 +435,7 @@ struct TrimModalView: View {
                         .foregroundStyle(DesignTokens.textSecondary)
                 }
             }
+            .padding(.horizontal, 8)
         }
     }
 

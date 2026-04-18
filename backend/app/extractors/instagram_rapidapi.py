@@ -10,6 +10,7 @@ directly from the CDN.
 """
 
 import logging
+from urllib.parse import urlparse, urlunparse
 
 import httpx
 
@@ -24,6 +25,19 @@ _RAPIDAPI_HOST = "instagram-video-downloader13.p.rapidapi.com"
 
 # 15 seconds is generous — the API typically responds in 1-2s.
 _TIMEOUT_SECONDS = 15
+
+
+def _clean_instagram_url(url: str) -> str:
+    """Strip tracking params (?igsh=, ?utm_source=, etc.) from an Instagram URL.
+
+    Instagram URLs don't need query parameters for extraction. Tracking
+    params can confuse the RapidAPI extractor.
+    """
+    parsed = urlparse(url)
+    clean = urlunparse((parsed.scheme, parsed.netloc, parsed.path, "", "", ""))
+    if not clean.endswith("/"):
+        clean += "/"
+    return clean
 
 
 def _parse_resolution(resolution: str) -> tuple[int, int]:
@@ -62,6 +76,9 @@ async def extract_instagram_via_rapidapi(url: str) -> dict:
         ExtractionError: The API returned an error or no video media.
         ExtractionTimeout: The API did not respond within the timeout.
     """
+    clean_url = _clean_instagram_url(url)
+    logger.info("Instagram URL cleaned: %s → %s", url, clean_url)
+
     headers = {
         "x-rapidapi-key": RAPIDAPI_KEY,
         "x-rapidapi-host": _RAPIDAPI_HOST,
@@ -73,7 +90,7 @@ async def extract_instagram_via_rapidapi(url: str) -> dict:
             response = await client.post(
                 _RAPIDAPI_URL,
                 headers=headers,
-                data={"url": url},
+                data={"url": clean_url},
             )
     except httpx.TimeoutException:
         logger.error("RapidAPI timeout after %ds for %s", _TIMEOUT_SECONDS, url)
