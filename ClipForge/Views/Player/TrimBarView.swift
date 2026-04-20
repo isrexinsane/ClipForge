@@ -66,22 +66,22 @@ struct TrimBarView: View {
                     // Selection border (top and bottom lines between handles)
                     selectionBorder(filmstripWidth: filmstripWidth, videoDuration: videoDuration)
 
-                    // Left handle
+                    // Playhead — BEFORE handles so handles get gesture priority
+                    playhead(filmstripWidth: filmstripWidth, videoDuration: videoDuration)
+
+                    // Left handle — renders AFTER playhead (on top, gets gestures first)
                     trimHandle(
                         isLeading: true,
                         filmstripWidth: filmstripWidth,
                         videoDuration: videoDuration
                     )
 
-                    // Right handle
+                    // Right handle — renders AFTER playhead (on top, gets gestures first)
                     trimHandle(
                         isLeading: false,
                         filmstripWidth: filmstripWidth,
                         videoDuration: videoDuration
                     )
-
-                    // Playhead
-                    playhead(filmstripWidth: filmstripWidth, videoDuration: videoDuration)
                 }
                 .frame(width: filmstripWidth, height: barHeight)
                 .clipped()

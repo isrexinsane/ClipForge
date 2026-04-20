@@ -61,46 +61,197 @@ struct TrimModalView: View {
 
     /// The full trim modal — extracted to keep `body` minimal and
     /// avoid SwiftUI type-checker cascades.
+    @ViewBuilder
     private var trimModalContent: some View {
+        if case .success = exportViewModel.exportState {
+            exportSuccessScreen
+                .statusBarHidden()
+                .persistentSystemOverlays(.hidden)
+                .sheet(isPresented: $showShareSheet, onDismiss: {
+                    if let url = shareFileURL {
+                        try? FileManager.default.removeItem(at: url)
+                        shareFileURL = nil
+                    }
+                }) {
+                    if let url = shareFileURL {
+                        ShareSheet(activityItems: [url])
+                    }
+                }
+        } else {
+            trimWorkingScreen
+                .statusBarHidden()
+                .persistentSystemOverlays(.hidden)
+                .onChange(of: playerManager.duration) { _, newDuration in
+                    guard newDuration > 0, trimViewModel == nil else { return }
+                    initializeTrimInterface(duration: newDuration)
+                }
+                .sheet(isPresented: $showShareSheet, onDismiss: {
+                    if let url = shareFileURL {
+                        try? FileManager.default.removeItem(at: url)
+                        shareFileURL = nil
+                    }
+                }) {
+                    if let url = shareFileURL {
+                        ShareSheet(activityItems: [url])
+                    }
+                }
+        }
+    }
+
+    /// The trim/encode working screen (idle, error, encoding, saving states).
+    private var trimWorkingScreen: some View {
         ZStack {
-            // Pure black background, edge-to-edge
             Color.black.ignoresSafeArea()
 
             VStack(spacing: 0) {
-                // Top bar
                 topBar
                     .padding(.horizontal, DesignTokens.paddingStandard)
                     .padding(.top, DesignTokens.paddingXSmall)
 
                 Spacer()
 
-                // Video player area — shows video during trim, GIF preview on success
-                videoArea
+                // Live video player
+                VideoPlayer(player: playerManager.player)
+                    .disabled(true)
+                    .aspectRatio(contentMode: .fit)
+                    .onTapGesture {
+                        if let vm = trimViewModel {
+                            vm.togglePreviewLoop()
+                        } else {
+                            playerManager.togglePlayback()
+                        }
+                    }
 
                 Spacer()
 
-                // Bottom area: depends on export state
                 bottomSection
                     .padding(.horizontal, DesignTokens.paddingStandard)
                     .padding(.bottom, DesignTokens.paddingStandard)
             }
+        }
+    }
 
-        }
-        .statusBarHidden()
-        .persistentSystemOverlays(.hidden)
-        .onChange(of: playerManager.duration) { _, newDuration in
-            guard newDuration > 0, trimViewModel == nil else { return }
-            initializeTrimInterface(duration: newDuration)
-        }
-        .sheet(isPresented: $showShareSheet, onDismiss: {
-            // Clean up temp file after share sheet closes
-            if let url = shareFileURL {
-                try? FileManager.default.removeItem(at: url)
-                shareFileURL = nil
-            }
-        }) {
-            if let url = shareFileURL {
-                ShareSheet(activityItems: [url])
+    /// The export success screen — top-anchored layout.
+    /// Done chip at top, then small gap, then GIF + info + buttons,
+    /// then flexible space at bottom absorbs remaining room.
+    @ViewBuilder
+    private var exportSuccessScreen: some View {
+        if case .success(let gifData, let fileSize, let dimensions) = exportViewModel.exportState {
+            let screenW = UIScreen.main.bounds.width
+            let containerW = screenW - 32.0
+            let aspectRatio = dimensions.width > 0 && dimensions.height > 0
+                ? dimensions.width / dimensions.height
+                : 9.0 / 16.0
+            let naturalH = containerW / aspectRatio
+            let clampedH = min(naturalH, 520.0)
+            let finalW = clampedH < naturalH ? clampedH * aspectRatio : containerW
+
+            ZStack {
+                Color.black.ignoresSafeArea()
+
+                VStack(spacing: 0) {
+
+                    // ── Done chip, right-aligned ──
+                    HStack {
+                        Spacer()
+                        Button {
+                            handleDismiss()
+                        } label: {
+                            Text("Done")
+                                .font(.system(size: 15, weight: .medium))
+                                .foregroundStyle(.white)
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 8)
+                                .background(.ultraThinMaterial)
+                                .clipShape(Capsule())
+                        }
+                        .padding(.trailing, 16)
+                    }
+                    .padding(.top, 8)
+
+                    // ── FIXED gap below Done chip — NOT flexible ──
+                    Spacer().frame(height: 16)
+
+                    // ── GIF Preview ──
+                    GIFPreviewView(gifData: gifData)
+                        .frame(width: finalW, height: clampedH)
+                        .cornerRadius(14)
+                        .clipped()
+                        .shadow(color: .black.opacity(0.4), radius: 14, y: 8)
+
+                    // ── 20pt gap ──
+                    Spacer().frame(height: 20)
+
+                    // ── File info ──
+                    if let info = exportViewModel.fileInfoText {
+                        Text(info)
+                            .font(.custom("JetBrainsMono-Regular", size: 13))
+                            .foregroundStyle(.white)
+                    }
+
+                    // ── 24pt gap ──
+                    Spacer().frame(height: 24)
+
+                    // ── Button row ──
+                    HStack(spacing: 12) {
+                        // SHARE button
+                        Button {
+                            let tempURL = FileManager.default.temporaryDirectory
+                                .appendingPathComponent("ClipForge-\(UUID().uuidString).gif")
+                            do {
+                                try gifData.write(to: tempURL)
+                                shareFileURL = tempURL
+                                showShareSheet = true
+                            } catch {
+                                #if DEBUG
+                                print("DEBUG: failed to write GIF temp file: \(error)")
+                                #endif
+                            }
+                        } label: {
+                            HStack(spacing: 8) {
+                                Image(systemName: "square.and.arrow.up")
+                                Text("SHARE")
+                            }
+                            .font(.custom("JetBrainsMono-Medium", size: 15))
+                            .tracking(1.5)
+                            .foregroundStyle(.white)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 52)
+                            .background(Color(hex: 0xEF3340))
+                            .clipShape(RoundedRectangle(cornerRadius: 26))
+                        }
+
+                        // DONE button
+                        Button {
+                            handleDismiss()
+                        } label: {
+                            Text("DONE")
+                                .font(.custom("JetBrainsMono-Medium", size: 15))
+                                .tracking(1.5)
+                                .foregroundStyle(.white)
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 52)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 26)
+                                        .stroke(Color.white.opacity(0.85), lineWidth: 1.5)
+                                )
+                        }
+                    }
+                    .padding(.horizontal, 16)
+
+                    // ── 16pt gap ──
+                    Spacer().frame(height: 16)
+
+                    // ── Free counter ──
+                    if !gatekeeper.isPremium {
+                        Text("\(gatekeeper.remainingExports) free GIFs remaining today")
+                            .font(.custom("JetBrainsMono-Regular", size: 11))
+                            .foregroundStyle(Color(hex: 0x968C83))
+                    }
+
+                    // ── FLEXIBLE bottom spacer — absorbs ALL extra space ──
+                    Spacer()
+                }
             }
         }
     }
@@ -204,8 +355,8 @@ struct TrimModalView: View {
     private func gifPreviewContainer(gifData: Data, dimensions: CGSize) -> some View {
         let screenW = UIScreen.main.bounds.width
         let screenH = UIScreen.main.bounds.height
-        let maxW = screenW - 20 * 2  // 20pt inset each side
-        let maxH = screenH * 0.45
+        let maxW = screenW - 16 * 2  // 16pt inset each side
+        let maxH = screenH * 0.65
 
         // Aspect-fit the GIF into the available box
         let ratio = dimensions.width > 0 && dimensions.height > 0
