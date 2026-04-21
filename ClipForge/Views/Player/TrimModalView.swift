@@ -146,6 +146,19 @@ struct TrimModalView: View {
             let clampedH = min(naturalH, 520.0)
             let finalW = clampedH < naturalH ? clampedH * aspectRatio : containerW
 
+            // Pre-write GIF to temp file so SHARE is instant
+            let _ = {
+                if shareFileURL == nil {
+                    let tempURL = FileManager.default.temporaryDirectory
+                        .appendingPathComponent("ClipForge-\(UUID().uuidString).gif")
+                    if let _ = try? gifData.write(to: tempURL) {
+                        DispatchQueue.main.async {
+                            shareFileURL = tempURL
+                        }
+                    }
+                }
+            }()
+
             ZStack {
                 Color.black.ignoresSafeArea()
 
@@ -196,16 +209,18 @@ struct TrimModalView: View {
                     HStack(spacing: 12) {
                         // SHARE button
                         Button {
-                            let tempURL = FileManager.default.temporaryDirectory
-                                .appendingPathComponent("ClipForge-\(UUID().uuidString).gif")
-                            do {
-                                try gifData.write(to: tempURL)
-                                shareFileURL = tempURL
+                            if shareFileURL != nil {
                                 showShareSheet = true
-                            } catch {
-                                #if DEBUG
-                                print("DEBUG: failed to write GIF temp file: \(error)")
-                                #endif
+                            } else {
+                                // Fallback: write now if pre-write failed
+                                let tempURL = FileManager.default.temporaryDirectory
+                                    .appendingPathComponent("ClipForge-\(UUID().uuidString).gif")
+                                if let _ = try? gifData.write(to: tempURL) {
+                                    shareFileURL = tempURL
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                        showShareSheet = true
+                                    }
+                                }
                             }
                         } label: {
                             HStack(spacing: 8) {
@@ -633,7 +648,8 @@ struct TrimModalView: View {
                             asset: asset,
                             startTime: trimVM.startTime,
                             endTime: trimVM.endTime,
-                            isPremium: gatekeeper.isPremium
+                            // TESTFLIGHT OVERRIDE — force premium (no watermark)
+                            isPremium: true
                         )
                     } else {
                         showFreemiumGate = true

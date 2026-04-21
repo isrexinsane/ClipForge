@@ -26,6 +26,7 @@ struct ContentView: View {
     @State private var selectedPage = 0
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
     @State private var showOnboarding = false
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -46,7 +47,7 @@ struct ContentView: View {
 
             // Layer 3: TabView with transparent page backgrounds
             TabView(selection: $selectedPage) {
-                HomeView(viewModel: homeViewModel, selectedPage: $selectedPage)
+                HomeView(viewModel: homeViewModel)
                     .tag(0)
 
                 MediaLibraryView(historyStore: historyStore)
@@ -65,6 +66,42 @@ struct ContentView: View {
         }
         .fullScreenCover(isPresented: $showOnboarding) {
             OnboardingView()
+        }
+        .onChange(of: scenePhase) { _, newPhase in
+            if newPhase == .active
+                && selectedPage == 0
+                && !showOnboarding
+                && hasCompletedOnboarding {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    homeViewModel.clipboardMonitor.startPolling()
+                }
+            } else if newPhase != .active {
+                homeViewModel.clipboardMonitor.stopPolling()
+            }
+        }
+        .onChange(of: selectedPage) { _, newPage in
+            // Always stop immediately when leaving Home
+            if newPage != 0 {
+                homeViewModel.clipboardMonitor.stopPolling()
+            } else {
+                // Delay before starting — selectedPage can briefly
+                // hit 0 during a swipe gesture before settling
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    if selectedPage == 0
+                        && scenePhase == .active
+                        && hasCompletedOnboarding {
+                        homeViewModel.clipboardMonitor.startPolling()
+                    }
+                }
+            }
+        }
+        .onChange(of: showOnboarding) { _, isShowing in
+            if !isShowing && hasCompletedOnboarding {
+                // Onboarding just dismissed — now safe to poll
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    homeViewModel.clipboardMonitor.startPolling()
+                }
+            }
         }
     }
 }

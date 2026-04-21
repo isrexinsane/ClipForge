@@ -1,3 +1,5 @@
+// ⚠️ TESTFLIGHT OVERRIDE ACTIVE — isPremium hardcoded true in init()
+// Remove before App Store submission (search for "TESTFLIGHT OVERRIDE")
 //
 //  FreemiumGatekeeper.swift
 //  ClipForge
@@ -32,9 +34,9 @@ final class FreemiumGatekeeper: ObservableObject {
     // MARK: - Published State
 
     @Published private(set) var dailyExportCount: Int
-    @Published var isPremium: Bool {
-        didSet { defaults.set(isPremium, forKey: Keys.isPremium) }
-    }
+    // TESTFLIGHT OVERRIDE — Change back to @Published var with
+    // didSet before App Store submission (search "TESTFLIGHT OVERRIDE")
+    @Published var isPremium: Bool = true
 
     // MARK: - Constants
 
@@ -58,16 +60,9 @@ final class FreemiumGatekeeper: ObservableObject {
 
     private init() {
         self.dailyExportCount = defaults.integer(forKey: Keys.dailyExportCount)
-        self.isPremium = defaults.bool(forKey: Keys.isPremium)
+        // TESTFLIGHT OVERRIDE — isPremium hardcoded to true above.
+        // For App Store, restore: self.isPremium = defaults.bool(forKey: Keys.isPremium)
         checkAndResetIfNewDay()
-
-        // Auto-grant premium for TestFlight testers.
-        // Property observers don't fire during init, so this
-        // stays in-memory only — won't persist to UserDefaults.
-        // Each app launch re-checks automatically.
-        if Self.isTestFlight {
-            self.isPremium = true
-        }
     }
 
     // MARK: - Computed Properties
@@ -75,14 +70,14 @@ final class FreemiumGatekeeper: ObservableObject {
     /// Whether the user can create a GIF right now.
     /// Premium users always can. Free users must be under the daily limit.
     var canExport: Bool {
-        checkAndResetIfNewDay()
-        return isPremium || dailyExportCount < dailyLimit
+        // TESTFLIGHT OVERRIDE — always allow export
+        return true
     }
 
     /// How many free exports remain today. Clamped to 0.
     var remainingExports: Int {
-        checkAndResetIfNewDay()
-        return max(dailyLimit - dailyExportCount, 0)
+        // TESTFLIGHT OVERRIDE — always show full
+        return dailyLimit
     }
 
     // MARK: - Methods

@@ -18,8 +18,6 @@ import SwiftUI
 struct HomeView: View {
 
     @ObservedObject var viewModel: HomeViewModel
-    @Binding var selectedPage: Int
-    @Environment(\.scenePhase) private var scenePhase
 
     // Restore feedback
     @State private var restoreFeedback: String?
@@ -62,25 +60,6 @@ struct HomeView: View {
                 Spacer()
                     .frame(height: DesignTokens.paddingXLarge + DesignTokens.paddingSmall)
             }
-        .onAppear {
-            if selectedPage == 0 {
-                viewModel.clipboardMonitor.startPolling()
-            }
-        }
-        .onChange(of: scenePhase) { _, newPhase in
-            if newPhase == .active && selectedPage == 0 {
-                viewModel.clipboardMonitor.startPolling()
-            } else {
-                viewModel.clipboardMonitor.stopPolling()
-            }
-        }
-        .onChange(of: selectedPage) { _, newPage in
-            if newPage == 0 && scenePhase == .active {
-                viewModel.clipboardMonitor.startPolling()
-            } else {
-                viewModel.clipboardMonitor.stopPolling()
-            }
-        }
         .fullScreenCover(isPresented: $viewModel.showTrimModal) {
             if case .success(let videoURL, _) = viewModel.importState {
                 TrimModalView(
@@ -174,13 +153,8 @@ struct HomeView: View {
     // MARK: - Free GIF Counter
 
     private var freeGIFCounter: some View {
-        Group {
-            if !FreemiumGatekeeper.shared.isPremium {
-                Text("\(FreemiumGatekeeper.shared.remainingExports) of \(FreemiumGatekeeper.shared.dailyLimit) free GIFs remaining today")
-                    .font(DesignTokens.bodyFont(size: 12))
-                    .foregroundStyle(DesignTokens.mutedWarm)
-            }
-        }
+        // TESTFLIGHT OVERRIDE — hide counter entirely
+        EmptyView()
     }
 
     // MARK: - Error Area
@@ -281,5 +255,5 @@ struct HomeView: View {
 }
 
 #Preview {
-    HomeView(viewModel: HomeViewModel(), selectedPage: .constant(0))
+    HomeView(viewModel: HomeViewModel())
 }
