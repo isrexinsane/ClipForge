@@ -41,84 +41,49 @@ final class ClipboardMonitor: ObservableObject {
 
     // MARK: - Polling
 
-    /// Timer that fires every `pollingInterval` seconds after foregrounding.
+    /// Timer for a single delayed retry after the initial clipboard check.
     private var pollingTimer: Timer?
-    /// When the current polling burst started.
-    private var pollingStartTime: Date?
-    /// How often to re-check the clipboard during a polling burst.
-    private let pollingInterval: TimeInterval = 0.5
-    /// Total duration of the polling burst (seconds).
-    private let pollingDuration: TimeInterval = 3.0
-    /// Running count for debug logging.
-    private var pollCheckCount: Int = 0
 
-    /// Begins an aggressive clipboard-polling burst.
-    ///
-    /// Checks immediately, then every 0.5 s for 3 seconds. Stops
-    /// early if a URL is detected or `stopPolling()` is called.
+    /// Checks clipboard immediately, then schedules one delayed retry
+    /// in case the iOS paste dialog was slow to resolve.
     func startPolling() {
         stopPolling()
-        pollingStartTime = Date()
-        pollCheckCount = 0
 
         #if DEBUG
-        print("ClipboardMonitor: starting polling")
+        print("ClipboardMonitor: checking clipboard on foreground")
         #endif
 
         // Check immediately
-        pollCheckCount += 1
-        #if DEBUG
-        print("ClipboardMonitor: poll check \(pollCheckCount)/6")
-        #endif
         checkClipboard()
 
-        // If the first check already found something, don't schedule more
+        // If first check found something, we're done
         if detectedURL != nil || isYouTubeURL || isRedditURL {
             #if DEBUG
-            print("ClipboardMonitor: URL found on first check, stopping poll")
+            print("ClipboardMonitor: URL found on first check")
             #endif
-            stopPolling()
             return
         }
 
-        // Schedule repeated checks
-        pollingTimer = Timer.scheduledTimer(withTimeInterval: pollingInterval, repeats: true) { [weak self] _ in
+        // One delayed retry in case the paste dialog was slow to resolve.
+        // Non-repeating — fires once then stops. Max 2 paste dialogs total.
+        pollingTimer = Timer.scheduledTimer(
+            withTimeInterval: 1.5,
+            repeats: false
+        ) { [weak self] _ in
             Task { @MainActor in
                 guard let self = self else { return }
-
-                // Stop after duration expires
-                if let start = self.pollingStartTime,
-                   Date().timeIntervalSince(start) > self.pollingDuration {
-                    #if DEBUG
-                    print("ClipboardMonitor: polling timeout, stopping")
-                    #endif
-                    self.stopPolling()
-                    return
-                }
-
-                // Stop if we already found a URL
-                if self.detectedURL != nil || self.isYouTubeURL || self.isRedditURL {
-                    #if DEBUG
-                    print("ClipboardMonitor: URL found, stopping poll")
-                    #endif
-                    self.stopPolling()
-                    return
-                }
-
-                self.pollCheckCount += 1
                 #if DEBUG
-                print("ClipboardMonitor: poll check \(self.pollCheckCount)/6")
+                print("ClipboardMonitor: delayed retry check")
                 #endif
                 self.checkClipboard()
             }
         }
     }
 
-    /// Cancels any active polling burst.
+    /// Cancels any active polling timer.
     func stopPolling() {
         pollingTimer?.invalidate()
         pollingTimer = nil
-        pollingStartTime = nil
     }
 
     /// Reads the system clipboard and updates published properties.
@@ -208,5 +173,11 @@ final class ClipboardMonitor: ObservableObject {
         detectedPlatform = nil
         isYouTubeURL = false
         isRedditURL = false
+    }
+
+    /// Resets the duplicate-check tracker so the same clipboard
+    /// content can be re-detected (e.g., after a failed import retry).
+    func resetLastChecked() {
+        lastCheckedString = nil
     }
 }

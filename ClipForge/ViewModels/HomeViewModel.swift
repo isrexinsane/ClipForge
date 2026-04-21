@@ -88,6 +88,9 @@ final class HomeViewModel: ObservableObject {
                     print("HomeViewModel: received URL from clipboard: \(url.absoluteString) (\(platform))")
                     #endif
                     self.importState = .urlDetected(url: url, platform: platform)
+                    // Auto-import: start immediately without waiting for CTA tap.
+                    // startImport() guards on .urlDetected so duplicate calls are safe.
+                    self.startImport()
                 } else {
                     #if DEBUG
                     print("HomeViewModel: no supported URL — state → idle")
@@ -125,6 +128,7 @@ final class HomeViewModel: ObservableObject {
     /// Re-checks the clipboard to restore URL detection.
     func retry() {
         importState = .idle
+        clipboardMonitor.resetLastChecked()
         clipboardMonitor.checkClipboard()
     }
 

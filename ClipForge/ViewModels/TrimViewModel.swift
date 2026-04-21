@@ -69,9 +69,6 @@ final class TrimViewModel: ObservableObject {
     /// Total duration of the source video in seconds.
     private let videoDuration: Double
 
-    /// Whether the user has moved at least one handle from default.
-    private var hasUserAdjusted: Bool = false
-
     /// Boundary time observer token for preview loop.
     private var boundaryObserver: Any?
 
@@ -92,11 +89,6 @@ final class TrimViewModel: ObservableObject {
         self.startTime = 0.0
 
         updateComputedProperties()
-
-        // If source video is ≤30s, CREATE is immediately available
-        if videoDuration <= Self.maxDuration {
-            isNextEnabled = true
-        }
     }
 
     deinit {
@@ -125,7 +117,7 @@ final class TrimViewModel: ObservableObject {
         }
 
         startTime = clamped
-        hasUserAdjusted = true
+
         updateComputedProperties()
     }
 
@@ -146,7 +138,7 @@ final class TrimViewModel: ObservableObject {
         }
 
         endTime = clamped
-        hasUserAdjusted = true
+
         updateComputedProperties()
     }
 
@@ -219,7 +211,7 @@ final class TrimViewModel: ObservableObject {
         }
 
         // isNextEnabled: true if user adjusted OR source ≤30s
-        isNextEnabled = hasUserAdjusted || videoDuration <= Self.maxDuration
+        isNextEnabled = trimDuration >= Self.minDuration
     }
 
     /// Adds a boundary time observer that fires when playback reaches endTime.

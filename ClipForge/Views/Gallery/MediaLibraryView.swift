@@ -40,6 +40,17 @@ struct MediaLibraryView: View {
                         .padding(.top, DesignTokens.paddingStandard)
                         .padding(.bottom, DesignTokens.paddingXLarge)
                 }
+                .mask(
+                    VStack(spacing: 0) {
+                        Color.black          // fully visible region
+                        LinearGradient(
+                            colors: [.black, .clear],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                        .frame(height: 120)  // fade zone at bottom of visible area
+                    }
+                )
 
                 // Reserve space for page dots
                 Spacer()
@@ -104,7 +115,6 @@ struct MediaLibraryView: View {
                     }
                 }
                 .frame(height: tallHeight)
-                .opacity(opacityForRow(rowIndex))
             }
         }
         .padding(.horizontal, DesignTokens.paddingStandard)
@@ -123,16 +133,6 @@ struct MediaLibraryView: View {
             }
         } else {
             PlaceholderGlassCard(height: height)
-        }
-    }
-
-    /// Cards fade as they go further down the page.
-    private func opacityForRow(_ index: Int) -> Double {
-        switch index {
-        case 0: return 1.0
-        case 1: return 0.5
-        case 2: return 0.4
-        default: return 0.35
         }
     }
 

@@ -22,6 +22,13 @@ final class FreemiumGatekeeper: ObservableObject {
 
     static let shared = FreemiumGatekeeper()
 
+    /// Returns true when the app is running from TestFlight (or Xcode debug).
+    /// TestFlight builds have a sandbox receipt; App Store builds do not.
+    static var isTestFlight: Bool {
+        guard let url = Bundle.main.appStoreReceiptURL else { return false }
+        return url.lastPathComponent == "sandboxReceipt"
+    }
+
     // MARK: - Published State
 
     @Published private(set) var dailyExportCount: Int
@@ -53,6 +60,14 @@ final class FreemiumGatekeeper: ObservableObject {
         self.dailyExportCount = defaults.integer(forKey: Keys.dailyExportCount)
         self.isPremium = defaults.bool(forKey: Keys.isPremium)
         checkAndResetIfNewDay()
+
+        // Auto-grant premium for TestFlight testers.
+        // Property observers don't fire during init, so this
+        // stays in-memory only — won't persist to UserDefaults.
+        // Each app launch re-checks automatically.
+        if Self.isTestFlight {
+            self.isPremium = true
+        }
     }
 
     // MARK: - Computed Properties

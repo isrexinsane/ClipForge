@@ -10,6 +10,12 @@
 
 import SwiftUI
 
+/// Identifies which element a drag gesture is controlling.
+private enum ActiveDragTarget {
+    case startHandle
+    case endHandle
+}
+
 /// The trim bar displayed at the bottom of the Trim Modal.
 ///
 /// Layout: [Play button | Filmstrip with handles + playhead]
@@ -23,6 +29,8 @@ struct TrimBarView: View {
     /// Whether each handle is currently being dragged (for visual feedback).
     @State private var isDraggingStart = false
     @State private var isDraggingEnd = false
+    /// Which element the current drag is controlling.
+    @State private var activeHandle: ActiveDragTarget? = nil
 
     /// Captured handle time at drag start — translation is applied relative to this.
     @State private var dragStartAnchor: Double?
@@ -66,25 +74,108 @@ struct TrimBarView: View {
                     // Selection border (top and bottom lines between handles)
                     selectionBorder(filmstripWidth: filmstripWidth, videoDuration: videoDuration)
 
-                    // Playhead — BEFORE handles so handles get gesture priority
-                    playhead(filmstripWidth: filmstripWidth, videoDuration: videoDuration)
+                    // Playhead (visual only — no gesture)
+                    playheadVisual(filmstripWidth: filmstripWidth, videoDuration: videoDuration)
 
-                    // Left handle — renders AFTER playhead (on top, gets gestures first)
-                    trimHandle(
+                }
+                .frame(width: filmstripWidth, height: barHeight)
+                .clipped()
+                .overlay(alignment: .leading) {
+                    handleVisual(
                         isLeading: true,
                         filmstripWidth: filmstripWidth,
                         videoDuration: videoDuration
                     )
-
-                    // Right handle — renders AFTER playhead (on top, gets gestures first)
-                    trimHandle(
+                }
+                .overlay(alignment: .leading) {
+                    handleVisual(
                         isLeading: false,
                         filmstripWidth: filmstripWidth,
                         videoDuration: videoDuration
                     )
                 }
-                .frame(width: filmstripWidth, height: barHeight)
-                .clipped()
+                .contentShape(Rectangle())
+                .highPriorityGesture(
+                    DragGesture(minimumDistance: 1)
+                        .onChanged { value in
+                            // On first drag event, determine which handle based on proximity
+                            if activeHandle == nil {
+                                let startX = value.startLocation.x
+                                let leftHandleX = timeToPosition(trimViewModel.startTime, filmstripWidth: filmstripWidth, videoDuration: videoDuration)
+                                let rightHandleX = timeToPosition(trimViewModel.endTime, filmstripWidth: filmstripWidth, videoDuration: videoDuration)
+
+                                let distToLeft = abs(startX - leftHandleX)
+                                let distToRight = abs(startX - rightHandleX)
+
+                                // 44pt proximity threshold (Apple HIG minimum touch target)
+                                if distToLeft <= distToRight && distToLeft < 44 {
+                                    activeHandle = .startHandle
+                                    dragStartAnchor = trimViewModel.startTime
+                                    #if DEBUG
+                                    print("TrimBarView: activated LEFT handle drag")
+                                    #endif
+                                } else if distToRight < 44 {
+                                    activeHandle = .endHandle
+                                    dragEndAnchor = trimViewModel.endTime
+                                    #if DEBUG
+                                    print("TrimBarView: activated RIGHT handle drag")
+                                    #endif
+                                }
+                            }
+
+                            guard let handle = activeHandle else { return }
+
+                            let timeDelta = (value.translation.width / filmstripWidth) * videoDuration
+
+                            switch handle {
+                            case .startHandle:
+                                isDraggingStart = true
+                                let anchor = dragStartAnchor ?? 0
+                                let newTime = anchor + timeDelta
+                                #if DEBUG
+                                print("TrimBarView: START drag — anchor=\(anchor) delta=\(timeDelta) newTime=\(newTime) filmW=\(filmstripWidth) vidDur=\(videoDuration)")
+                                #endif
+                                trimViewModel.updateStartTime(newTime)
+
+                                let now = Date()
+                                if now.timeIntervalSince(lastSeekTime) > 0.1 {
+                                    trimViewModel.seekToStart()
+                                    lastSeekTime = now
+                                }
+
+                            case .endHandle:
+                                isDraggingEnd = true
+                                let anchor = dragEndAnchor ?? 0
+                                let newTime = anchor + timeDelta
+                                #if DEBUG
+                                print("TrimBarView: END drag — anchor=\(anchor) delta=\(timeDelta) newTime=\(newTime) filmW=\(filmstripWidth) vidDur=\(videoDuration)")
+                                #endif
+                                trimViewModel.updateEndTime(newTime)
+
+                                let now = Date()
+                                if now.timeIntervalSince(lastSeekTime) > 0.1 {
+                                    trimViewModel.seekToEnd()
+                                    lastSeekTime = now
+                                }
+                            }
+                        }
+                        .onEnded { _ in
+                            switch activeHandle {
+                            case .startHandle:
+                                trimViewModel.seekToStart()
+                                isDraggingStart = false
+                                dragStartAnchor = nil
+                            case .endHandle:
+                                trimViewModel.seekToEnd()
+                                isDraggingEnd = false
+                                dragEndAnchor = nil
+                            case nil:
+                                break
+                            }
+                            activeHandle = nil
+                            lastSeekTime = .distantPast
+                        }
+                )
             }
             .background(
                 RoundedRectangle(cornerRadius: 10)
@@ -165,9 +256,9 @@ struct TrimBarView: View {
         .frame(height: barHeight, alignment: .top)
     }
 
-    // MARK: - Trim Handle
+    // MARK: - Handle Visual (no gesture — container handles all touches)
 
-    private func trimHandle(
+    private func handleVisual(
         isLeading: Bool,
         filmstripWidth: CGFloat,
         videoDuration: Double
@@ -178,7 +269,7 @@ struct TrimBarView: View {
         let isDragging = isLeading ? isDraggingStart : isDraggingEnd
 
         return Rectangle()
-            .fill(isDragging ? DesignTokens.vermillion.opacity(0.85) : Color.white.opacity(0.3))
+            .fill(isDragging ? DesignTokens.vermillion : DesignTokens.vermillion.opacity(0.7))
             .frame(width: handleWidth, height: barHeight)
             .overlay(
                 Image(systemName: isLeading ? "chevron.compact.left" : "chevron.compact.right")
@@ -187,92 +278,27 @@ struct TrimBarView: View {
             )
             .scaleEffect(isDragging ? 1.15 : 1.0)
             .animation(.spring(response: 0.2, dampingFraction: 0.6), value: isDragging)
-            // 44pt-wide invisible hit area centered on the visible handle
-            .padding(.horizontal, (minHitArea - handleWidth) / 2)
-            .contentShape(Rectangle())
-            .offset(x: handleOffset - (minHitArea - handleWidth) / 2)
-            .gesture(
-                DragGesture(minimumDistance: 1)
-                    .onChanged { value in
-                        // Update dragging flag
-                        if isLeading { isDraggingStart = true } else { isDraggingEnd = true }
-
-                        // Capture the handle's time at drag start (first onChanged call)
-                        if isLeading {
-                            if dragStartAnchor == nil { dragStartAnchor = trimViewModel.startTime }
-                        } else {
-                            if dragEndAnchor == nil { dragEndAnchor = trimViewModel.endTime }
-                        }
-
-                        // Convert pixel translation to time delta, then apply to anchor
-                        let anchor = isLeading ? (dragStartAnchor ?? 0) : (dragEndAnchor ?? 0)
-                        let timeDelta = (value.translation.width / filmstripWidth) * videoDuration
-                        let newTime = anchor + timeDelta
-
-                        if isLeading {
-                            trimViewModel.updateStartTime(newTime)
-                        } else {
-                            trimViewModel.updateEndTime(newTime)
-                        }
-
-                        // Throttle seeks to every 0.1s to avoid overwhelming AVPlayer
-                        let now = Date()
-                        if now.timeIntervalSince(lastSeekTime) > 0.1 {
-                            if isLeading {
-                                trimViewModel.seekToStart()
-                            } else {
-                                trimViewModel.seekToEnd()
-                            }
-                            lastSeekTime = now
-                        }
-                    }
-                    .onEnded { _ in
-                        // Final seek to the committed position
-                        if isLeading {
-                            trimViewModel.seekToStart()
-                            isDraggingStart = false
-                            dragStartAnchor = nil
-                        } else {
-                            trimViewModel.seekToEnd()
-                            isDraggingEnd = false
-                            dragEndAnchor = nil
-                        }
-
-                        lastSeekTime = .distantPast
-                    }
-            )
+            .offset(x: handleOffset)
+            .allowsHitTesting(false)
     }
 
-    // MARK: - Playhead
+    // MARK: - Playhead Visual (no gesture — scrubbing deferred to v1.1)
 
-    private func playhead(filmstripWidth: CGFloat, videoDuration: Double) -> some View {
+    private func playheadVisual(filmstripWidth: CGFloat, videoDuration: Double) -> some View {
         let currentTime = playerManager.currentTime
         let xPosition = timeToPosition(currentTime, filmstripWidth: filmstripWidth, videoDuration: videoDuration)
 
         return VStack(spacing: 0) {
-            // Rounded nub at top
             RoundedRectangle(cornerRadius: 2)
                 .fill(Color.white)
                 .frame(width: 9, height: 6)
 
-            // Vertical line
             Rectangle()
                 .fill(Color.white)
                 .frame(width: playheadWidth, height: barHeight - 6)
         }
         .offset(x: xPosition - playheadWidth / 2)
-        .gesture(
-            DragGesture(minimumDistance: 0)
-                .onChanged { value in
-                    // Use startLocation for initial tap, then translation for movement
-                    let startX = timeToPosition(playerManager.currentTime, filmstripWidth: filmstripWidth, videoDuration: videoDuration)
-                    let dragX = startX + value.translation.width
-                    let time = positionToTime(dragX, filmstripWidth: filmstripWidth, videoDuration: videoDuration)
-                    let clampedTime = min(max(time, 0), videoDuration)
-                    let cmTime = CMTime(seconds: clampedTime, preferredTimescale: 600)
-                    playerManager.player.seek(to: cmTime, toleranceBefore: .zero, toleranceAfter: .zero)
-                }
-        )
+        .allowsHitTesting(false)
     }
 
     // MARK: - Coordinate Mapping
