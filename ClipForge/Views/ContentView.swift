@@ -46,7 +46,7 @@ struct ContentView: View {
 
             // Layer 3: TabView with transparent page backgrounds
             TabView(selection: $selectedPage) {
-                HomeView(viewModel: homeViewModel)
+                HomeView(viewModel: homeViewModel, selectedPage: $selectedPage)
                     .tag(0)
 
                 MediaLibraryView(historyStore: historyStore)

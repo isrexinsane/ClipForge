@@ -18,6 +18,7 @@ import SwiftUI
 struct HomeView: View {
 
     @ObservedObject var viewModel: HomeViewModel
+    @Binding var selectedPage: Int
     @Environment(\.scenePhase) private var scenePhase
 
     // Restore feedback
@@ -62,10 +63,19 @@ struct HomeView: View {
                     .frame(height: DesignTokens.paddingXLarge + DesignTokens.paddingSmall)
             }
         .onAppear {
-            viewModel.clipboardMonitor.startPolling()
+            if selectedPage == 0 {
+                viewModel.clipboardMonitor.startPolling()
+            }
         }
         .onChange(of: scenePhase) { _, newPhase in
-            if newPhase == .active {
+            if newPhase == .active && selectedPage == 0 {
+                viewModel.clipboardMonitor.startPolling()
+            } else {
+                viewModel.clipboardMonitor.stopPolling()
+            }
+        }
+        .onChange(of: selectedPage) { _, newPage in
+            if newPage == 0 && scenePhase == .active {
                 viewModel.clipboardMonitor.startPolling()
             } else {
                 viewModel.clipboardMonitor.stopPolling()
@@ -271,5 +281,5 @@ struct HomeView: View {
 }
 
 #Preview {
-    HomeView(viewModel: HomeViewModel())
+    HomeView(viewModel: HomeViewModel(), selectedPage: .constant(0))
 }

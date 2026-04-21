@@ -253,12 +253,15 @@ struct GIFGlassCard: View {
 
             // Thumbnail — fills the card but clipped to rounded rect
             if let thumbnail {
-                Image(uiImage: thumbnail)
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .clipShape(RoundedRectangle(cornerRadius: corner))
-                    .allowsHitTesting(false)
+                GeometryReader { geo in
+                    Image(uiImage: thumbnail)
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: geo.size.width, height: geo.size.height)
+                        .clipped()
+                }
+                .clipShape(RoundedRectangle(cornerRadius: corner))
+                .allowsHitTesting(false)
             } else {
                 ProgressView()
                     .tint(DesignTokens.mutedWarm)
